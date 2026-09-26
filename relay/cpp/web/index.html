@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>R2R — privacy-first relay network</title>
+<style>
+:root{
+  color-scheme:light dark;
+  --bg:#fbfbfd; --fg:#16181d; --mut:#6b7280; --line:#e4e4e9;
+  --card:#fff; --acc:#2f6f4f; --ok:#2f8f5b; --bad:#b4403a;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0e1013; --fg:#e8e9ec; --mut:#9aa1ab; --line:#23262d;
+        --card:#15181d; --acc:#79d0a3; --ok:#6fce9c; --bad:#e0736c}
+}
+*{box-sizing:border-box}
+body{margin:0;padding:3rem 1.25rem;background:var(--bg);color:var(--fg);
+     font:15px/1.6 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:52rem;margin:0 auto}
+header{margin-bottom:2.5rem}
+h1{font-size:1.75rem;margin:0 0 .35rem;letter-spacing:-.02em}
+.tag{display:inline-block;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+     color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:.15rem .55rem;
+     margin-bottom:.9rem}
+p.lede{margin:0;color:var(--mut);max-width:38rem}
+h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);
+   margin:2.25rem 0 .75rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));gap:.75rem}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.95rem 1.1rem}
+.stat .n{font-size:1.6rem;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat .l{color:var(--mut);font-size:.76rem;text-transform:uppercase;letter-spacing:.06em;margin-top:.2rem}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.4rem 1.1rem}
+.row{display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;
+     border-top:1px solid var(--line);font-size:.9rem;align-items:baseline}
+.row:first-child{border-top:none}
+.k{color:var(--mut)}
+.v{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;text-align:right;word-break:break-all}
+.dot{display:inline-block;width:.5rem;height:.5rem;border-radius:50%;margin-right:.45rem;
+     vertical-align:middle}
+.up{background:var(--ok)} .down{background:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:.87rem}
+th{text-align:left;font-weight:500;color:var(--mut);font-size:.74rem;text-transform:uppercase;
+   letter-spacing:.06em;padding:.5rem 0;border-bottom:1px solid var(--line)}
+td{padding:.5rem 0;border-bottom:1px solid var(--line);
+   font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+td:last-child,th:last-child{text-align:right}
+tr:last-child td{border-bottom:none}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--card);
+     border:1px solid var(--line);border-radius:5px;padding:.1rem .4rem;font-size:.85em}
+pre{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1rem;
+    overflow-x:auto;font-size:.84rem;margin:0}
+a{color:var(--acc)}
+.check{display:flex;gap:.5rem;flex-wrap:wrap}
+input[type=text]{flex:1;min-width:16rem;background:var(--bg);color:var(--fg);
+     border:1px solid var(--line);border-radius:8px;padding:.55rem .7rem;font:inherit;
+     font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.85rem}
+button{background:var(--acc);color:var(--bg);border:0;border-radius:8px;padding:.55rem 1.1rem;
+     font:inherit;font-weight:500;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+#checkResult{margin-top:.6rem;font-size:.88rem;min-height:1.3rem}
+footer{margin-top:3rem;padding-top:1.25rem;border-top:1px solid var(--line);
+       color:var(--mut);font-size:.82rem}
+.muted{color:var(--mut)}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="tag">Relay network</div>
+    <h1>R2R</h1>
+    <p class="lede">A peer-to-peer messaging relay network. Nodes hold encrypted
+    payloads they cannot read, forward what belongs elsewhere, and keep no logs
+    of who connected.</p>
+  </header>
+
+  <h2>This node</h2>
+  <div class="grid" id="stats">
+    <div class="stat"><div class="n" id="s-nodes">–</div><div class="l">active nodes</div></div>
+    <div class="stat"><div class="n" id="s-drops">–</div><div class="l">payloads held</div></div>
+    <div class="stat"><div class="n" id="s-conns">–</div><div class="l">live connections</div></div>
+    <div class="stat"><div class="n" id="s-relayed">–</div><div class="l">frames relayed</div></div>
+  </div>
+
+  <h2>Status</h2>
+  <section class="card">
+    <div class="row"><span class="k">reachability</span>
+      <span class="v" id="d-state"><span class="dot down"></span>checking…</span></div>
+    <div class="row"><span class="k">node id</span><span class="v" id="d-node">–</span></div>
+    <div class="row"><span class="k">version</span><span class="v" id="d-version">–</span></div>
+    <div class="row"><span class="k">uptime</span><span class="v" id="d-uptime">–</span></div>
+    <div class="row"><span class="k">registered identities</span><span class="v" id="d-ids">–</span></div>
+    <div class="row"><span class="k">retention</span><span class="v" id="d-ttl">–</span></div>
+  </section>
+
+  <h2>Network</h2>
+  <section class="card">
+    <table>
+      <thead><tr><th>Relay</th><th>Node</th><th>State</th></tr></thead>
+      <tbody id="peers"><tr><td colspan="3" class="muted">loading…</td></tr></tbody>
+    </table>
+  </section>
+
+  <h2>Check an invite code</h2>
+  <section class="card" style="padding:1.1rem">
+    <div class="check">
+      <input type="text" id="code" placeholder="00000000-0000-4000-8000-000000000000"
+             autocomplete="off" spellcheck="false" maxlength="36">
+      <button id="checkBtn">Check</button>
+    </div>
+    <div id="checkResult" class="muted">Codes are single use. Checking one does not consume it.</div>
+  </section>
+
+  <h2>Connecting</h2>
+  <section class="card">
+    <div class="row"><span class="k">portal &amp; bridge (via CDN)</span>
+      <span class="v">wss://r2r.homes/ws</span></div>
+    <div class="row"><span class="k">direct relay endpoint</span>
+      <span class="v">wss://92.113.147.233:8788</span></div>
+    <div class="row"><span class="k">peer gossip</span>
+      <span class="v">ws://92.113.147.233:8787</span></div>
+    <div class="row"><span class="k">peer list</span>
+      <span class="v"><a href="/peers.json">/peers.json</a></span></div>
+    <div class="row"><span class="k">node keys</span>
+      <span class="v"><a href="/node.json">/node.json</a></span></div>
+    <div class="row"><span class="k">counters</span>
+      <span class="v"><a href="/status.json">/status.json</a></span></div>
+  </section>
+  <p class="muted" style="font-size:.85rem;margin-top:.9rem">
+    The <code>/ws</code> bridge is convenient but terminates TLS at the CDN edge,
+    which can therefore observe frame timing and size. Clients that care about
+    metadata should use the direct endpoint on port 8788 instead — payloads are
+    end-to-end encrypted either way.
+  </p>
+
+  <footer>
+    <span id="foot">R2R relay</span> · no personal data, no IP logs, payloads expire automatically.
+  </footer>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const num = n => (n === null || n === undefined) ? '–' : Number(n).toLocaleString();
+
+function duration(s){
+  s = Math.max(0, Number(s)||0);
+  const d = Math.floor(s/86400), h = Math.floor(s%86400/3600), m = Math.floor(s%3600/60);
+  if (d) return `${d}d ${h}h`;
+  if (h) return `${h}h ${m}m`;
+  return `${m}m ${Math.floor(s%60)}s`;
+}
+
+async function refresh(){
+  try {
+    const r = await fetch('/status.json', {cache:'no-store'});
+    if (!r.ok) throw new Error(r.status);
+    const s = await r.json();
+    $('s-nodes').textContent   = num(s.peers_active);
+    $('s-drops').textContent   = num(s.drops_stored);
+    $('s-conns').textContent   = num(s.connections);
+    $('s-relayed').textContent = num(s.frames_forwarded);
+    $('d-state').innerHTML     = '<span class="dot up"></span>online';
+    $('d-node').textContent    = s.node_id || '–';
+    $('d-version').textContent = s.version || '–';
+    $('d-uptime').textContent  = duration(s.uptime);
+    $('d-ids').textContent     = num(s.identities);
+    $('d-ttl').textContent     = (s.ttl_days ?? '–') + ' days';
+    $('foot').textContent      = 'r2r-relay ' + (s.version || '');
+  } catch (e) {
+    $('d-state').innerHTML = '<span class="dot down"></span>relay unreachable';
+  }
+
+  try {
+    const r = await fetch('/peers.json', {cache:'no-store'});
+    const d = await r.json();
+    const rows = (d.peers || []).map(p =>
+      `<tr><td>${esc(p.address)}</td><td>${esc((p.node_id||'').slice(0,12) || '—')}</td>` +
+      `<td>${p.verified
+        ? '<span class="dot up"></span>verified'
+        : '<span class="dot down"></span>unverified'}</td></tr>`);
+    $('peers').innerHTML = rows.length
+      ? rows.join('')
+      : '<tr><td colspan="3" class="muted">no peers yet</td></tr>';
+  } catch (e) {
+    $('peers').innerHTML = '<tr><td colspan="3" class="muted">peer list unavailable</td></tr>';
+  }
+}
+
+function esc(s){
+  return String(s ?? '').replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+async function checkCode(){
+  const el = $('checkResult');
+  const code = $('code').value.trim().toLowerCase();
+  if (!UUID_RE.test(code)) {
+    el.style.color = 'var(--bad)';
+    el.textContent = 'That is not a valid invite code format.';
+    return;
+  }
+  $('checkBtn').disabled = true;
+  el.style.color = 'var(--mut)';
+  el.textContent = 'checking…';
+  try {
+    const r = await fetch('/invite/check/' + encodeURIComponent(code), {cache:'no-store'});
+    const d = await r.json();
+    if (d.ok && d.open) {
+      el.style.color = 'var(--ok)';
+      el.textContent = 'This code is unused. A client can claim it to join.';
+    } else if (d.ok) {
+      el.style.color = 'var(--bad)';
+      el.textContent = 'This code has already been used.';
+    } else {
+      el.style.color = 'var(--bad)';
+      el.textContent = 'This code is not recognised by this relay.';
+    }
+  } catch (e) {
+    el.style.color = 'var(--bad)';
+    el.textContent = 'Could not reach the relay.';
+  } finally {
+    $('checkBtn').disabled = false;
+  }
+}
+
+$('checkBtn').addEventListener('click', checkCode);
+$('code').addEventListener('keydown', e => { if (e.key === 'Enter') checkCode(); });
+
+refresh();
+setInterval(refresh, 15000);
+</script>
+</body>
+</html>

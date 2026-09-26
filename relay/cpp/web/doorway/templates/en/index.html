@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="R2R is an invite-only, peer-to-peer anonymous chat, voice and video network. End-to-end encrypted. No accounts. No metadata.">
+<meta name="robots" content="index,follow">
+<title>R2R — invite-only anonymous chat</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="/sippis-shell.css?v=1786369720">
+<style>
+  :root { --primary: #0EADB5; --secondary: #F26430; --bg-tint: #09797E; }
+  main.r2r { max-width: 960px; padding: 0 20px; }
+  main.r2r a { color: rgba(255,255,255,0.82); text-decoration: underline; text-decoration-color: rgba(255,255,255,0.35); text-underline-offset: 2px; }
+  main.r2r a:hover { color: #fff; text-decoration-color: var(--primary); }
+  main.r2r .r2r-choice a { text-decoration: none; }
+  main.r2r .r2r-choice a:hover { text-decoration: none; }
+  .r2r-hero { text-align: center; padding: 32px 0 24px; }
+  .r2r-wordmark {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-weight: 800; font-size: clamp(120px, 22vw, 220px);
+    line-height: 1; letter-spacing: -8px; color: #fff;
+    margin: 0; text-shadow: 0 0 40px rgba(14,173,181,0.4);
+    user-select: none;
+  }
+  .r2r-wordmark span { color: var(--primary); }
+  .r2r-hero h1 { font-size: clamp(28px, 4vw, 42px); margin: 8px 0 4px; letter-spacing: -0.5px; font-weight: 500; }
+  .r2r-hero h1 em { font-style: normal; color: var(--primary); }
+  .r2r-hero .lede { font-size: 18px; color: rgba(255,255,255,0.75); max-width: 680px; margin: 12px auto 28px; }
+  .r2r-noinvite { font-size: 13px; color: rgba(255,255,255,0.55); margin-top: 10px; }
+
+  /* White paper button under the lede */
+  .r2r-paper-row {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+    gap: 10px 18px; margin: -6px auto 26px; max-width: 760px;
+  }
+  main.r2r .r2r-paper-btn {
+    display: inline-flex; align-items: center; gap: 9px; padding: 12px 22px;
+    border-radius: 999px; background: var(--primary); color: #fff; text-decoration: none;
+    font-weight: 700; font-size: 15px; box-shadow: 0 6px 20px rgba(14,173,181,0.35);
+    transition: transform 150ms, filter 150ms;
+  }
+  main.r2r .r2r-paper-btn:hover { transform: translateY(-1px); filter: brightness(1.08); color: #fff; }
+  .r2r-paper-row span { font-size: 13.5px; color: rgba(255,255,255,0.7); max-width: 400px; text-align: left; line-height: 1.45; }
+  @media (max-width: 600px) { .r2r-paper-row span { text-align: center; } }
+
+  /* Two CTA cards side by side */
+  .r2r-choice { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 24px 0 8px; text-align: left; }
+  .r2r-choice > * {
+    display: block; padding: 22px 20px; background: rgba(0,0,0,0.20);
+    border-radius: 12px; text-decoration: none; color: inherit;
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: border-color 120ms, background 120ms;
+  }
+  .r2r-choice a:hover {
+    border-color: var(--primary); background: rgba(14,173,181,0.10); transform: translateY(-2px);
+  }
+  .r2r-choice .r2r-choice-title {
+    display: block; font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 4px;
+  }
+  .r2r-choice .r2r-choice-sub {
+    display: block; font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.45;
+  }
+  .r2r-choice .r2r-choice-cta {
+    display: inline-block; margin-top: 12px; font-size: 14px; font-weight: 600;
+    color: var(--primary);
+  }
+  .r2r-choice a .r2r-choice-cta::after { content: " →"; }
+
+  /* Inline redeem form inside the first CTA card */
+  .r2r-inline-form { margin-top: 12px; display: flex; gap: 8px; }
+  .r2r-inline-form input[type=text] {
+    flex: 1; min-width: 0; padding: 10px 12px; font-size: 15px;
+    font-family: monospace; text-transform: uppercase; letter-spacing: 1.5px; text-align: center;
+    border: 1.5px solid var(--primary); border-radius: 8px;
+    background: rgba(0,0,0,0.35); color: inherit; outline: none;
+  }
+  .r2r-inline-form input[type=text]::placeholder { color: rgba(255,255,255,0.45); letter-spacing: 1px; }
+  .r2r-inline-form button {
+    padding: 10px 18px; background: var(--primary); color: #fff; border: 0;
+    border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 600;
+  }
+  .r2r-inline-form button:hover { filter: brightness(1.1); }
+
+  /* "Why R2R exists" video box — sits above the two CTA cards */
+  .r2r-video-box {
+    margin: 12px auto 28px; padding: 24px 22px 22px; max-width: 760px;
+    background: rgba(0,0,0,0.22); border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08); text-align: center;
+  }
+  .r2r-video-title {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-weight: 800; font-size: clamp(24px, 3.6vw, 36px); line-height: 1.15;
+    letter-spacing: -1px; color: #fff; margin: 0 0 18px;
+  }
+  .r2r-video-title .accent { color: var(--primary); }
+  .r2r-video-embed {
+    position: relative; width: 100%; aspect-ratio: 16 / 9;
+    border-radius: 10px; overflow: hidden; background: #000;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  .r2r-video-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .r2r-video-para {
+    margin: 18px auto 0; max-width: 660px;
+    color: rgba(255,255,255,0.82); font-size: 15px; line-height: 1.6; text-align: left;
+  }
+  .r2r-video-para + .r2r-video-para { margin-top: 12px; }
+
+  .r2r-section { padding: 40px 0; border-top: 1px solid rgba(255,255,255,0.08); text-align: left; }
+  .r2r-section h2 { color: var(--primary); font-size: 22px; margin: 0 0 12px; }
+
+  .r2r-pillars { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 12px; }
+  .r2r-pillar { background: rgba(0,0,0,0.20); padding: 18px; border-radius: 10px; border-top: 3px solid var(--primary); }
+  .r2r-pillar b { color: var(--primary); display: block; margin-bottom: 6px; font-size: 15px; }
+  .r2r-pillar p { margin: 0; color: rgba(255,255,255,0.80); font-size: 14px; line-height: 1.5; }
+
+  .r2r-steps { list-style: none; padding: 0; margin: 16px 0 0; counter-reset: step; display: grid; gap: 14px; }
+  .r2r-steps li { position: relative; padding: 14px 18px 14px 60px; background: rgba(0,0,0,0.15); border-radius: 10px; }
+  .r2r-steps li::before {
+    counter-increment: step; content: counter(step);
+    position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+    width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700;
+  }
+  .r2r-steps li b { display: block; margin-bottom: 2px; }
+  .r2r-steps li span { color: rgba(255,255,255,0.75); font-size: 14px; }
+
+  .r2r-stats { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin: 12px 0 4px; }
+  .r2r-stat { flex: 0 1 180px; padding: 18px 22px; background: rgba(0,0,0,0.20); border-radius: 12px; text-align: center; }
+  .r2r-stat b { display: block; font-size: 32px; color: var(--primary); line-height: 1.1; }
+  .r2r-stat span { font-size: 13px; color: rgba(255,255,255,0.7); }
+
+  /* Mesh animation section — R2Я wordmark now lives INSIDE the SVG */
+  .r2r-mesh-section { padding: 16px 0 8px; text-align: center; }
+  .r2r-mesh-frame { display: inline-block; max-width: 100%; width: 100%; }
+  .r2r-mesh-frame svg {
+    display: block; margin: 0 auto;
+    width: 100%; max-width: 576px; height: auto;
+  }
+  .r2r-mesh-caption {
+    margin: 4px auto 0; max-width: 520px; color: rgba(255,255,255,0.65);
+    font-size: 14px; line-height: 1.5;
+  }
+
+  /* Collapsible FAQ items */
+  .r2r-faq { display: grid; gap: 8px; margin-top: 12px; }
+  .r2r-faq details {
+    background: rgba(0,0,0,0.20); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; overflow: hidden;
+    transition: border-color 120ms, background 120ms;
+  }
+  .r2r-faq details[open] { border-color: rgba(14,173,181,0.45); background: rgba(0,0,0,0.28); }
+  .r2r-faq summary {
+    list-style: none; cursor: pointer;
+    padding: 14px 44px 14px 18px; position: relative;
+    font-weight: 600; color: #fff; font-size: 15px; line-height: 1.4;
+    user-select: none;
+  }
+  .r2r-faq summary::-webkit-details-marker { display: none; }
+  .r2r-faq summary::after {
+    content: ""; position: absolute; right: 18px; top: 50%;
+    width: 10px; height: 10px; margin-top: -7px;
+    border-right: 2px solid var(--primary); border-bottom: 2px solid var(--primary);
+    transform: rotate(45deg); transition: transform 180ms;
+  }
+  .r2r-faq details[open] summary::after { transform: rotate(-135deg); margin-top: -3px; }
+  .r2r-faq summary:hover { color: var(--primary); }
+  .r2r-faq .r2r-faq-body {
+    padding: 0 18px 16px; color: rgba(255,255,255,0.82);
+    font-size: 14.5px; line-height: 1.6;
+  }
+  .r2r-faq .r2r-faq-body p { margin: 0; }
+  .r2r-faq .r2r-faq-body p + p { margin-top: 10px; }
+
+  footer { padding: 24px; color: rgba(255,255,255,0.5); font-size: 13px; }
+</style>
+</head>
+<body>
+<header class="topbar">
+    <a class="brand r2r-brand" href="/" aria-label="R2Я home">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="118 45 360 250" width="360" height="250" aria-label="R2R decentralised mesh: independent relays gossip and route encrypted payloads with no central server." role="img">
+  <defs>
+    <style><![CDATA[
+      @keyframes lineIn  {0%{stroke-dashoffset:300;opacity:0}30%{opacity:.4}100%{stroke-dashoffset:0;opacity:.4}}
+      @keyframes lineInA {0%{stroke-dashoffset:300;opacity:0}30%{opacity:.35}100%{stroke-dashoffset:0;opacity:.35}}
+      .cn{stroke:#0A7B83;stroke-width:2.5;fill:none;stroke-dasharray:300;stroke-dashoffset:300;animation:lineIn 1.5s ease-out forwards}
+      .ca{stroke:#F26430;stroke-width:2;fill:none;stroke-dasharray:300;stroke-dashoffset:300;animation:lineInA 1.5s ease-out forwards}
+      .l1{animation-delay:.1s}.l2{animation-delay:.2s}.l3{animation-delay:.3s}
+      .l4{animation-delay:.4s}.l5{animation-delay:.5s}.l6{animation-delay:.6s}
+      .l7{animation-delay:.7s}.l8{animation-delay:.8s}.l9{animation-delay:.9s}
+      .l10{animation-delay:1s}.l11{animation-delay:1.1s}.l12{animation-delay:1.2s}
+      .l13{animation-delay:1.3s}.l14{animation-delay:1.4s}.l15{animation-delay:1.5s}
+      .l16{animation-delay:1.6s}.l17{animation-delay:1.7s}.l18{animation-delay:1.8s}
+      .l19{animation-delay:1.9s}
+      @keyframes nIn{0%{opacity:0;transform:scale(0)}60%{opacity:1}80%{transform:scale(1.15)}100%{opacity:1;transform:scale(1)}}
+      .np{fill:#0A7B83;opacity:0;transform-box:fill-box;transform-origin:center;animation:nIn .6s ease-out forwards}
+      .ns{fill:#0EADB5;opacity:0;transform-box:fill-box;transform-origin:center;animation:nIn .6s ease-out forwards}
+      .na{fill:#F26430;opacity:0;transform-box:fill-box;transform-origin:center;animation:nIn .6s ease-out forwards}
+      .n1{animation-delay:.3s}.n2{animation-delay:.5s}.n3{animation-delay:.7s}
+      .n4{animation-delay:.9s}.n5{animation-delay:1.1s}.n7{animation-delay:1.5s}
+      .n8{animation-delay:1.7s}.n9{animation-delay:1.9s}.n10{animation-delay:2.1s}
+      .n11{animation-delay:2.3s}.n12{animation-delay:2.5s}.n13{animation-delay:2.7s}
+      @keyframes coreL{0%{r:0;opacity:0}8%{r:18;opacity:1}20%{r:21}32%{r:18}44%{r:21}56%{r:18}68%{r:20}80%{r:18}100%{r:18;opacity:1}}
+      @keyframes ringL{0%{r:0;opacity:0}8%{r:10;opacity:.6}20%{r:13;opacity:.3}32%{r:10;opacity:.6}44%{r:13;opacity:.3}56%{r:10;opacity:.6}68%{r:11;opacity:.5}80%{r:10;opacity:.6}100%{r:10;opacity:.6}}
+      .corN{fill:#0A7B83;opacity:0;animation:coreL 7s ease-in-out 1.3s forwards}
+      .corR{opacity:0;animation:ringL 7s ease-in-out 1.3s forwards}
+      @keyframes sI4{0%{opacity:0;transform:scale(0)}100%{opacity:.4;transform:scale(1)}}
+      @keyframes sI3{0%{opacity:0;transform:scale(0)}100%{opacity:.3;transform:scale(1)}}
+      .s4{opacity:0;transform-box:fill-box;transform-origin:center;animation:sI4 .6s ease-out forwards}
+      .s3{opacity:0;transform-box:fill-box;transform-origin:center;animation:sI3 .6s ease-out forwards}
+      .d1{animation-delay:2s}.d2{animation-delay:2.2s}.d3{animation-delay:2.4s}
+      .d4{animation-delay:2.6s}.d5{animation-delay:2.8s}.d6{animation-delay:3s}
+      @keyframes pkG{0%{offset-distance:0%;opacity:0}5%{opacity:1}95%{opacity:1}100%{offset-distance:100%;opacity:0}}
+      @keyframes pkF{0%,75%{opacity:1}100%{opacity:0}}
+      .pk{fill:#F26430;offset-rotate:0deg;opacity:0}
+      .pa{animation:pkG 2.5s linear 1.8s 2}
+      .pb{animation:pkG 3s linear 2.2s 2}
+      .pc{animation:pkG 2.8s linear 2.5s 2}
+      .pd{animation:pkG 3.2s linear 1.9s 2}
+      .pe{animation:pkG 2.2s linear 2.8s 2}
+      .pw{animation:pkF 8s ease-out forwards}
+
+      /* R2Я wordmark overlay — sits on top of the animated mesh */
+      @keyframes wmIn{0%{opacity:0;transform:scale(0.85)}100%{opacity:1;transform:scale(1)}}
+      .wm{
+        font: 800 130px/1 -apple-system, "Segoe UI", system-ui, sans-serif;
+        letter-spacing:-10px; fill:#fff;
+        transform-box:fill-box; transform-origin:center;
+        animation: wmIn 1.2s ease-out .2s both;
+      }
+      .wm .accent{fill:#0EADB5}
+    ]]></style>
+    <filter id="wm-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+      <feOffset dx="0" dy="3" result="off"/>
+      <feFlood flood-color="#000" flood-opacity="0.55"/>
+      <feComposite in2="off" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g transform="translate(300, 170) rotate(90)">
+    <line class="cn l1"  x1="-60" y1="-150" x2="20"  y2="-110"/>
+    <line class="cn l2"  x1="20"  y1="-110" x2="80"  y2="-145"/>
+    <line class="cn l3"  x1="-60" y1="-150" x2="-30" y2="-90"/>
+    <line class="cn l4"  x1="20"  y1="-110" x2="-30" y2="-90"/>
+    <line class="cn l5"  x1="-30" y1="-90"  x2="-80" y2="-30"/>
+    <line class="ca l6"  x1="80"  y1="-145" x2="40"  y2="-40"/>
+    <line class="cn l7"  x1="-30" y1="-90"  x2="40"  y2="-40"/>
+    <line class="cn l8"  x1="-80" y1="-30"  x2="0"   y2="0"/>
+    <line class="cn l9"  x1="40"  y1="-40"  x2="0"   y2="0"/>
+    <line class="ca l10" x1="-80" y1="-30"  x2="-40" y2="40"/>
+    <line class="cn l11" x1="0"   y1="0"    x2="80"  y2="30"/>
+    <line class="cn l12" x1="0"   y1="0"    x2="-40" y2="40"/>
+    <line class="cn l13" x1="80"  y1="30"   x2="30"  y2="90"/>
+    <line class="ca l14" x1="-40" y1="40"   x2="-20" y2="110"/>
+    <line class="cn l15" x1="80"  y1="30"   x2="60"  y2="150"/>
+    <line class="cn l16" x1="30"  y1="90"   x2="-20" y2="110"/>
+    <line class="cn l17" x1="-20" y1="110"  x2="60"  y2="150"/>
+    <line class="cn l18" x1="30"  y1="90"   x2="60"  y2="150"/>
+    <line class="cn l19" x1="-20" y1="110"  x2="-80" y2="145"/>
+
+    <g class="pw">
+      <circle class="pk pa" r="3"   style="offset-path:path('M-60,-150 L20,-110 L-30,-90 L0,0')"/>
+      <circle class="pk pb" r="3"   style="offset-path:path('M80,-145 L40,-40 L0,0 L80,30 L60,150')"/>
+      <circle class="pk pc" r="3"   style="offset-path:path('M0,0 L-40,40 L-20,110 L-80,145')"/>
+      <circle class="pk pd" r="2.5" style="offset-path:path('M-80,-30 L0,0 L80,30 L30,90')"/>
+      <circle class="pk pe" r="2.5" style="offset-path:path('M-60,-150 L-30,-90 L-80,-30 L-40,40 L-20,110')"/>
+    </g>
+
+    <circle class="np n1"  cx="-60" cy="-150" r="14"/>
+    <circle class="ns n2"  cx="20"  cy="-110" r="10"/>
+    <circle class="np n3"  cx="80"  cy="-145" r="11"/>
+    <circle class="ns n4"  cx="-30" cy="-90"  r="8"/>
+    <circle class="na n5"  cx="40"  cy="-40"  r="9"/>
+    <circle class="corN"   cx="0"   cy="0"    r="18"/>
+    <circle class="corR"   cx="0"   cy="0"    r="10" fill="none" stroke="#fff" stroke-width="2"/>
+    <circle class="ns n7"  cx="-80" cy="-30"  r="10"/>
+    <circle class="ns n8"  cx="80"  cy="30"   r="10"/>
+    <circle class="na n9"  cx="-40" cy="40"   r="9"/>
+    <circle class="ns n10" cx="30"  cy="90"   r="8"/>
+    <circle class="np n11" cx="-20" cy="110"  r="10"/>
+    <circle class="np n12" cx="60"  cy="150"  r="14"/>
+    <circle class="ns n13" cx="-80" cy="145"  r="11"/>
+
+    <circle class="s4 d1" cx="-95"  cy="-160" r="3" fill="#0EADB5"/>
+    <circle class="s4 d2" cx="105"  cy="-155" r="3" fill="#0EADB5"/>
+    <circle class="s4 d3" cx="-105" cy="155"  r="3" fill="#F26430"/>
+    <circle class="s4 d4" cx="85"   cy="165"  r="3" fill="#0EADB5"/>
+    <circle class="s3 d5" cx="110"  cy="10"   r="4" fill="#0A7B83"/>
+    <circle class="s3 d6" cx="-110" cy="-10"  r="4" fill="#0A7B83"/>
+  </g>
+
+  <!-- R2Я wordmark, centered on top of the mesh -->
+  <text class="wm" x="298" y="215" text-anchor="middle" filter="url(#wm-shadow)">R<tspan class="accent">2</tspan>Я</text>
+</svg>
+  </a>
+
+    <nav class="site-nav" aria-label="Site sections">
+          <a href="/"
+         class="site-nav-item active"
+         >Home</a>
+          <a href="/redeem.php"
+         class="site-nav-item"
+         >Redeem</a>
+          <a href="/downloads.php"
+         class="site-nav-item"
+         >Downloads</a>
+          <a href="/run-a-relay.php"
+         class="site-nav-item"
+         >Your Relay</a>
+          <a href="/network.php"
+         class="site-nav-item"
+         >Network</a>
+          <a href="{{BASE}}/paper"
+         class="site-nav-item"
+         >Paper</a>
+          <a href="/privacy.php"
+         class="site-nav-item"
+         >Privacy</a>
+          <a href="/homes.php"
+         class="site-nav-item"
+         >Homes</a>
+          <a href="/faq.php"
+         class="site-nav-item"
+         >FAQ</a>
+          <a href="{{BASE}}/status"
+         class="site-nav-item"
+         >Status</a>
+  
+      </nav>
+
+  <nav class="topbar-actions">
+    <form class="lang-form" method="get" action="">
+      <label class="visually-hidden" for="sippis-lang">Language</label>
+      <select id="sippis-lang" name="lang" class="lang-select" onchange="this.form.submit()">
+                  <option value="ar">العربية</option>
+                  <option value="bg">Български</option>
+                  <option value="bn">বাংলা</option>
+                  <option value="cs">Čeština</option>
+                  <option value="da">Dansk</option>
+                  <option value="de">Deutsch</option>
+                  <option value="el">Ελληνικά</option>
+                  <option value="en" selected>English</option>
+                  <option value="es">Español</option>
+                  <option value="fa">فارسی</option>
+                  <option value="fi">Suomi</option>
+                  <option value="fil">Filipino</option>
+                  <option value="fr">Français</option>
+                  <option value="he">עברית</option>
+                  <option value="hi">हिन्दी</option>
+                  <option value="hr">Hrvatski</option>
+                  <option value="hu">Magyar</option>
+                  <option value="id">Indonesia</option>
+                  <option value="it">Italiano</option>
+                  <option value="ja">日本語</option>
+                  <option value="ko">한국어</option>
+                  <option value="ms">Melayu</option>
+                  <option value="nl">Nederlands</option>
+                  <option value="no">Norsk</option>
+                  <option value="pl">Polski</option>
+                  <option value="pt">Português</option>
+                  <option value="ro">Română</option>
+                  <option value="ru">Русский</option>
+                  <option value="sk">Slovenčina</option>
+                  <option value="sv">Svenska</option>
+                  <option value="sw">Kiswahili</option>
+                  <option value="th">ไทย</option>
+                  <option value="tr">Türkçe</option>
+                  <option value="uk">Українська</option>
+                  <option value="ur">اردو</option>
+                  <option value="vi">Tiếng Việt</option>
+                  <option value="zh">中文</option>
+              </select>
+      <noscript><button type="submit" class="lang-apply">&#x2713;</button></noscript>
+    </form>
+
+                <div class="topbar-intent-pills">
+        <a class="intent-pill active" href="/redeem.php">Redeem an invite</a>
+        <a class="intent-pill" href="/run-a-relay.php">Run a relay</a>
+      </div>
+      </nav>
+</header>
+
+
+<main class="r2r">
+  <section class="r2r-mesh-section">
+    <div class="r2r-mesh-frame">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="118 45 360 250" width="360" height="250" aria-label="R2R decentralised mesh: independent relays gossip and route encrypted payloads with no central server." role="img">
+  <defs>
+    <style><![CDATA[
+      @keyframes lineIn  {0%{stroke-dashoffset:300;opacity:0}30%{opacity:.4}100%{stroke-dashoffset:0;opacity:.4}}
+      @keyframes lineInA {0%{stroke-dashoffset:300;opacity:0}30%{opacity:.35}100%{stroke-dashoffset:0;opacity:.35}}
+      .cn{stroke:#0A7B83;stroke-width:2.5;fill:none;stroke-dasharray:300;stroke-dashoffset:300;animation:lineIn 1.5s ease-out forwards}
+      .ca{stroke:#F26430;stroke-width:2;fill:none;stroke-dasharray:300;stroke-dashoffset:300;animation:lineInA 1.5s ease-out forwards}
+      .l1{animation-delay:.1s}.l2{animation-delay:.2s}.l3{animation-delay:.3s}
+      .l4{animation-delay:.4s}.l5{animation-delay:.5s}.l6{animation-delay:.6s}
+      .l7{animation-delay:.7s}.l8{animation-delay:.8s}.l9{animation-delay:.9s}
+      .l10{animation-delay:1s}.l11{animation-delay:1.1s}.l12{animation-delay:1.2s}
+      .l13{animation-delay:1.3s}.l14{animation-delay:1.4s}.l15{animation-delay:1.5s}
+      .l16{animation-delay:1.6s}.l17{animation-delay:1.7s}.l18{animation-delay:1.8s}
+      .l19{animation-delay:1.9s}
+      @keyframes nIn{0%{opacity:0;transform:scale(0)}60%{opacity:1}80%{transform:scale(1.15)}100%{opacity:1;transform:scale(1)}}
+      .np{fill:#0A7B83;opacity:0;transform-box:fill-box;transform-origin:center;animation:nIn .6s ease-out forwards}
+      .ns{fill:#0EADB5;opacity:0;transform-box:fill-box;transform-origin:center;animation:nIn .6s ease-out forwards}
+      .na{fill:#F26430;opacity:0;transform-box:fill-box;transform-origin:center;animation:nIn .6s ease-out forwards}
+      .n1{animation-delay:.3s}.n2{animation-delay:.5s}.n3{animation-delay:.7s}
+      .n4{animation-delay:.9s}.n5{animation-delay:1.1s}.n7{animation-delay:1.5s}
+      .n8{animation-delay:1.7s}.n9{animation-delay:1.9s}.n10{animation-delay:2.1s}
+      .n11{animation-delay:2.3s}.n12{animation-delay:2.5s}.n13{animation-delay:2.7s}
+      @keyframes coreL{0%{r:0;opacity:0}8%{r:18;opacity:1}20%{r:21}32%{r:18}44%{r:21}56%{r:18}68%{r:20}80%{r:18}100%{r:18;opacity:1}}
+      @keyframes ringL{0%{r:0;opacity:0}8%{r:10;opacity:.6}20%{r:13;opacity:.3}32%{r:10;opacity:.6}44%{r:13;opacity:.3}56%{r:10;opacity:.6}68%{r:11;opacity:.5}80%{r:10;opacity:.6}100%{r:10;opacity:.6}}
+      .corN{fill:#0A7B83;opacity:0;animation:coreL 7s ease-in-out 1.3s forwards}
+      .corR{opacity:0;animation:ringL 7s ease-in-out 1.3s forwards}
+      @keyframes sI4{0%{opacity:0;transform:scale(0)}100%{opacity:.4;transform:scale(1)}}
+      @keyframes sI3{0%{opacity:0;transform:scale(0)}100%{opacity:.3;transform:scale(1)}}
+      .s4{opacity:0;transform-box:fill-box;transform-origin:center;animation:sI4 .6s ease-out forwards}
+      .s3{opacity:0;transform-box:fill-box;transform-origin:center;animation:sI3 .6s ease-out forwards}
+      .d1{animation-delay:2s}.d2{animation-delay:2.2s}.d3{animation-delay:2.4s}
+      .d4{animation-delay:2.6s}.d5{animation-delay:2.8s}.d6{animation-delay:3s}
+      @keyframes pkG{0%{offset-distance:0%;opacity:0}5%{opacity:1}95%{opacity:1}100%{offset-distance:100%;opacity:0}}
+      @keyframes pkF{0%,75%{opacity:1}100%{opacity:0}}
+      .pk{fill:#F26430;offset-rotate:0deg;opacity:0}
+      .pa{animation:pkG 2.5s linear 1.8s 2}
+      .pb{animation:pkG 3s linear 2.2s 2}
+      .pc{animation:pkG 2.8s linear 2.5s 2}
+      .pd{animation:pkG 3.2s linear 1.9s 2}
+      .pe{animation:pkG 2.2s linear 2.8s 2}
+      .pw{animation:pkF 8s ease-out forwards}
+
+      /* R2Я wordmark overlay — sits on top of the animated mesh */
+      @keyframes wmIn{0%{opacity:0;transform:scale(0.85)}100%{opacity:1;transform:scale(1)}}
+      .wm{
+        font: 800 130px/1 -apple-system, "Segoe UI", system-ui, sans-serif;
+        letter-spacing:-10px; fill:#fff;
+        transform-box:fill-box; transform-origin:center;
+        animation: wmIn 1.2s ease-out .2s both;
+      }
+      .wm .accent{fill:#0EADB5}
+    ]]></style>
+    <filter id="wm-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+      <feOffset dx="0" dy="3" result="off"/>
+      <feFlood flood-color="#000" flood-opacity="0.55"/>
+      <feComposite in2="off" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g transform="translate(300, 170) rotate(90)">
+    <line class="cn l1"  x1="-60" y1="-150" x2="20"  y2="-110"/>
+    <line class="cn l2"  x1="20"  y1="-110" x2="80"  y2="-145"/>
+    <line class="cn l3"  x1="-60" y1="-150" x2="-30" y2="-90"/>
+    <line class="cn l4"  x1="20"  y1="-110" x2="-30" y2="-90"/>
+    <line class="cn l5"  x1="-30" y1="-90"  x2="-80" y2="-30"/>
+    <line class="ca l6"  x1="80"  y1="-145" x2="40"  y2="-40"/>
+    <line class="cn l7"  x1="-30" y1="-90"  x2="40"  y2="-40"/>
+    <line class="cn l8"  x1="-80" y1="-30"  x2="0"   y2="0"/>
+    <line class="cn l9"  x1="40"  y1="-40"  x2="0"   y2="0"/>
+    <line class="ca l10" x1="-80" y1="-30"  x2="-40" y2="40"/>
+    <line class="cn l11" x1="0"   y1="0"    x2="80"  y2="30"/>
+    <line class="cn l12" x1="0"   y1="0"    x2="-40" y2="40"/>
+    <line class="cn l13" x1="80"  y1="30"   x2="30"  y2="90"/>
+    <line class="ca l14" x1="-40" y1="40"   x2="-20" y2="110"/>
+    <line class="cn l15" x1="80"  y1="30"   x2="60"  y2="150"/>
+    <line class="cn l16" x1="30"  y1="90"   x2="-20" y2="110"/>
+    <line class="cn l17" x1="-20" y1="110"  x2="60"  y2="150"/>
+    <line class="cn l18" x1="30"  y1="90"   x2="60"  y2="150"/>
+    <line class="cn l19" x1="-20" y1="110"  x2="-80" y2="145"/>
+
+    <g class="pw">
+      <circle class="pk pa" r="3"   style="offset-path:path('M-60,-150 L20,-110 L-30,-90 L0,0')"/>
+      <circle class="pk pb" r="3"   style="offset-path:path('M80,-145 L40,-40 L0,0 L80,30 L60,150')"/>
+      <circle class="pk pc" r="3"   style="offset-path:path('M0,0 L-40,40 L-20,110 L-80,145')"/>
+      <circle class="pk pd" r="2.5" style="offset-path:path('M-80,-30 L0,0 L80,30 L30,90')"/>
+      <circle class="pk pe" r="2.5" style="offset-path:path('M-60,-150 L-30,-90 L-80,-30 L-40,40 L-20,110')"/>
+    </g>
+
+    <circle class="np n1"  cx="-60" cy="-150" r="14"/>
+    <circle class="ns n2"  cx="20"  cy="-110" r="10"/>
+    <circle class="np n3"  cx="80"  cy="-145" r="11"/>
+    <circle class="ns n4"  cx="-30" cy="-90"  r="8"/>
+    <circle class="na n5"  cx="40"  cy="-40"  r="9"/>
+    <circle class="corN"   cx="0"   cy="0"    r="18"/>
+    <circle class="corR"   cx="0"   cy="0"    r="10" fill="none" stroke="#fff" stroke-width="2"/>
+    <circle class="ns n7"  cx="-80" cy="-30"  r="10"/>
+    <circle class="ns n8"  cx="80"  cy="30"   r="10"/>
+    <circle class="na n9"  cx="-40" cy="40"   r="9"/>
+    <circle class="ns n10" cx="30"  cy="90"   r="8"/>
+    <circle class="np n11" cx="-20" cy="110"  r="10"/>
+    <circle class="np n12" cx="60"  cy="150"  r="14"/>
+    <circle class="ns n13" cx="-80" cy="145"  r="11"/>
+
+    <circle class="s4 d1" cx="-95"  cy="-160" r="3" fill="#0EADB5"/>
+    <circle class="s4 d2" cx="105"  cy="-155" r="3" fill="#0EADB5"/>
+    <circle class="s4 d3" cx="-105" cy="155"  r="3" fill="#F26430"/>
+    <circle class="s4 d4" cx="85"   cy="165"  r="3" fill="#0EADB5"/>
+    <circle class="s3 d5" cx="110"  cy="10"   r="4" fill="#0A7B83"/>
+    <circle class="s3 d6" cx="-110" cy="-10"  r="4" fill="#0A7B83"/>
+  </g>
+
+  <!-- R2Я wordmark, centered on top of the mesh -->
+  <text class="wm" x="298" y="215" text-anchor="middle" filter="url(#wm-shadow)">R<tspan class="accent">2</tspan>Я</text>
+</svg>
+    </div>
+    <p class="r2r-mesh-caption">
+      A mesh of independent relays &mdash; anyone can run one.<br>Encrypted payloads hop between them; no single node sees both ends.    </p>
+  </section>
+
+  <section class="r2r-hero">
+    <h1>Talk to anyone. <em>Have no one watching.</em></h1>
+    <p class="lede">
+      Invite-only peer-to-peer chat, voice and video. Messages relay through a mesh of personal relays anyone can run. No accounts. No phone number. No email. No server ever sees plaintext &mdash; not ours, not yours, not the relay you route through.    </p>
+
+    <p class="r2r-paper-row">
+      <a class="r2r-paper-btn" href="{{BASE}}/paper"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 1.5h5.5L13 5v9.5H4z"/><path d="M9.5 1.5V5H13M6 8h4M6 10.5h4"/></svg> View/Download the Paper</a>
+      <span>The complete protocol white paper: every frame, key and signing string, with test vectors. Read it online or take the PDF.</span>
+    </p>
+
+    <div class="r2r-video-box">
+      <h2 class="r2r-video-title">This is the reason why R<span class="accent">2</span>Я exists.</h2>
+      <div class="r2r-video-embed">
+        <iframe src="https://www.youtube.com/embed/VAuDJ3yrhDM"
+                title="Why R2R exists"
+                loading="lazy"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen></iframe>
+      </div>
+      <p class="r2r-video-para">
+        The big issue with all the existing messaging systems we have is that they belong to someone. There&#039;s a company behind them, so there&#039;s a person to go to. They&#039;re centralized. They control the server, and your information is saved on their server.      </p>
+      <p class="r2r-video-para">
+        R2R shifts the paradigm and lets you save your data on your own storage, with each user having a small dedicated storage &mdash; and everything stored there is end-to-end encrypted and anonymized, so even the relay holding it can't read it or tie it to you. This way, there's no central place to control information, censor information, collect information, or delete information. And there's no one person to go to to stop the system.      </p>
+    </div>
+
+    <div class="r2r-choice">
+      <form action="/redeem.php" method="get">
+        <span class="r2r-choice-title">I have an invite code</span>
+        <span class="r2r-choice-sub">Type the code someone shared with you. We'll mint a fresh setup card &mdash; then you open R2R with an anonymous identity.</span>
+        <div class="r2r-inline-form">
+          <input type="text" name="code" placeholder="R2R-XXXX-XXXX-XXXX" autocomplete="off"
+                 pattern="[A-Za-z0-9\-]{6,32}" spellcheck="false" required>
+          <button type="submit">Continue</button>
+        </div>
+      </form>
+      <a href="/run-a-relay.php">
+        <span class="r2r-choice-title">No invite? Run your own relay</span>
+        <span class="r2r-choice-sub">One command on any Linux server. Your relay mints invite codes the moment it starts &mdash; one for you, the rest for your friends &mdash; and you become the one handing out invites. No central authority, nobody to ask.</span>
+        <span class="r2r-choice-cta">Set it up in five minutes</span>
+      </a>
+    </div>
+
+    <p class="r2r-noinvite">
+      No code and nobody to ask? That is exactly what running a relay is for: it makes <em>you</em> the one who gives out invites, and it needs nobody's permission.    </p>
+  </section>
+
+  <section class="r2r-section" id="what">
+    <h2>What R2R is, in four bullets</h2>
+    <div class="r2r-pillars">
+      <div class="r2r-pillar"><b>Peer to peer</b><p>Every user runs (or borrows) their own relay &mdash; there's no central server that could be seized, subpoenaed, or shut down.</p></div>
+      <div class="r2r-pillar"><b>End-to-end encrypted</b><p>Every message and every attachment is encrypted between sender and recipient. Relays only ever handle ciphertext &mdash; and with onion routing, on by default, no relay sees both who sent a message and who it is for.</p></div>
+      <div class="r2r-pillar"><b>Chat &middot; voice &middot; video</b><p>1:1 and group text, mail with attachments, voice notes, video notes, live voice and video calls, screen share.</p></div>
+      <div class="r2r-pillar"><b>Invite-only, small circles</b><p>No search, no directory, no discovery. You exist to the people who invited you and the people you invite.</p></div>
+    </div>
+  </section>
+
+  <section class="r2r-section" id="how">
+    <h2>Two ways in</h2>
+
+    <h3 style="color:var(--primary);margin-top:16px;font-size:17px">1. Get an invite code</h3>
+    <ol class="r2r-steps">
+      <li><b>Someone gives you a code</b><span>A short token like <code>R2R-XXXX-XXXX-XXXX</code>. It can only be used once.</span></li>
+      <li><b>You redeem it here</b><span><code>{{HOST}}</code> mints a fresh setup card &mdash; a QR + text string &mdash; that carries no identity, just a bootstrap secret.</span></li>
+      <li><b>You import the card into the R2R app</b><span>Choose a PIN or passphrase &mdash; a few random words is strongest. The card and your passphrase create your identity, and restore it on any other device later. Nobody else holds a copy.</span></li>
+    </ol>
+
+    <h3 style="color:var(--primary);margin-top:32px;font-size:17px">2. Run your own relay &mdash; and hand out the invites yourself</h3>
+    <p style="color:rgba(255,255,255,0.8);margin:8px 0 12px">
+      If you have any Linux server &mdash; a home box, a $5 VPS &mdash; you can stand up a full peer in the network with one command. You are not dependent on anyone else's invite chain: your relay mints its own invite codes on first start, and as its owner you can mint as many as you like. The network doesn't have a centre; running a relay is how you claim your seat at it, and how it grows.    </p>
+    <ol class="r2r-steps">
+      <li><b>Install it</b><span>Log in to any recent x86-64 Linux server (a $5 VPS is enough) and paste four downloads and one command. No database, no web server, nothing else to install.</span></li>
+      <li><b>Claim your own invite</b><span>Your relay writes five genesis codes on first start. Redeem one in the wallet: that is your identity, homed on your own box.</span></li>
+      <li><b>Invite your friends</b><span>Hand out the other four, or mint more from the wallet's owner panel or the shell. Each person you bring in gets three codes to pass on.</span></li>
+    </ol>
+    <p style="margin:12px 0">
+      <a class="cta" href="/run-a-relay.php">Run a relay &rarr; setup guide</a>
+    </p>
+  </section>
+
+    
+  <section class="r2r-section" id="wallet">
+    <h2>Get the wallet</h2>
+    <p style="color:rgba(255,255,255,0.8)">
+      R2R runs entirely in your browser or as a single-file local HTML app &mdash; no install, no extension, no account. Open it here to try it, or download it once and open it from disk whenever you need it. Either way the app talks directly to your relay over WebSockets.    </p>
+    <div class="r2r-choice">
+      <a href="{{BASE}}/assets/r2r-wallet.html" target="_blank" rel="noopener">
+        <span class="r2r-choice-title">Open the wallet in your browser</span>
+        <span class="r2r-choice-sub">Served by this relay over HTTPS. Nothing is installed; your keys stay in your browser's storage, encrypted with your PIN or passphrase.</span>
+        <span class="r2r-choice-cta">Open</span>
+      </a>
+      <a href="{{BASE}}/assets/r2r-wallet.html" download="r2r-wallet.html">
+        <span class="r2r-choice-title">Download the wallet file</span>
+        <span class="r2r-choice-sub">One HTML file, about 700 KB. Keep it on your device and open it from disk; a local copy can also reach relays that have no TLS certificate.</span>
+        <span class="r2r-choice-cta">Download</span>
+      </a>
+    </div>
+    <p style="color:rgba(255,255,255,0.6);font-size:14px">
+      Same file either way. Its SHA-256 is listed on the <a href="/downloads.php">Downloads</a> page, where you can also cross-check it against other relays. Relay operators: the <a href="{{BASE}}/assets/r2r-setup-card-forge.html" target="_blank" rel="noopener">setup card forge</a> mints setup cards for your relay, and the <a href="{{BASE}}/assets/r2r-wallet-src.zip">source package</a> holds everything the wallet is built from.    </p>
+  </section>
+
+  <section class="r2r-section" id="faq">
+    <h2>Frequently asked</h2>
+    <div class="r2r-faq">
+      <details>
+        <summary>I don't know anyone on R2R. How do I get in?</summary>
+        <div class="r2r-faq-body"><p>Run a relay. It is the one way in that needs nobody's permission: on first start your relay mints five invite codes, you claim one yourself and hand out the rest, and from then on <em>you</em> are the person people ask for an invite. It takes one command on any Linux server &mdash; see <a href="/run-a-relay.php">Run your own relay</a>.</p></div>
+      </details>
+      <details>
+        <summary>Why invite-only?</summary>
+        <div class="r2r-faq-body"><p>Every network scaled with search became a network where people are targeted, mass-messaged, or catalogued. R2R keeps the graph small on purpose &mdash; you exist only to the people you actually know.</p></div>
+      </details>
+      <details>
+        <summary>Do you keep logs?</summary>
+        <div class="r2r-faq-body"><p>Relays keep only what they must, and only as ciphertext: messages waiting for you (deleted once your app confirms them, and after seven days at most), your own encrypted history, and voice or video files you send. They also know your identity&rsquo;s fingerprint and which invite code brought you in. There is no <em>who spoke to whom</em> log to hand over, and no IP address is ever written down.</p></div>
+      </details>
+      <details>
+        <summary>What if my inviter revokes me?</summary>
+        <div class="r2r-faq-body"><p>Root codes and their entire descendant tree can be revoked from the relay owner's admin panel. Once your identity exists it lives on your device and your relay &mdash; revoking your original code does not delete you, but it does prevent your unused invites from being redeemed.</p></div>
+      </details>
+      <details>
+        <summary>Who runs {{HOST}}?</summary>
+        <div class="r2r-faq-body"><p>The operator of this specific relay runs <em>this particular copy</em> of the doorway &mdash; but this page is not special. What you're reading is one of potentially many identical copies: any relay operator can publish the same doorway on their own domain, and every copy points at that operator's own relay.<br><br><b>R2R itself has no owner.</b> It is run by the community, and there is no single person, company, or country that can decide anything for the network or shut it down.</p></div>
+      </details>
+      <details>
+        <summary>How can I reach a relay?</summary>
+        <div class="r2r-faq-body"><p>A relay can run under a domain name or with just an IP address. The wallet is a single HTML file you open on your own device, and it can talk to any relay. A copy opened from a website over https can only reach relays that have a real TLS certificate (<code>wss://</code>), so relays on a bare IP are used from the local file. Once connected, the experience is identical.</p></div>
+      </details>
+      <details>
+        <summary>Where do invite codes come from?</summary>
+        <div class="r2r-faq-body"><p>Every relay operator can mint invite codes on their own relay, and there is no central issuer. A code minted on a relay makes that relay the newcomer&rsquo;s first home. Members who join with a code in the app also receive three codes of their own. Those codes unlock once the member has really used the network: received a few messages, and chatted with the person who invited them, whose app then vouches for them. Every code remembers who issued it, so a relay owner can switch off a whole branch of invitations at once.</p></div>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Powered by <a href="https://sippis.com/">Sippis</a>  </footer>
+</body>
+</html>

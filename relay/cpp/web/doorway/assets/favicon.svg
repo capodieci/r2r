@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="R2R">
+  <!-- Static miniature of the R2R mesh logo: hub relay with ring, four peers. -->
+  <rect x="0" y="0" width="64" height="64" rx="14" fill="#0c2230"/>
+  <g stroke="#0A7B83" stroke-width="3.5" opacity="0.95">
+    <line x1="32" y1="35" x2="14" y2="12"/>
+    <line x1="32" y1="35" x2="50" y2="10"/>
+    <line x1="32" y1="35" x2="54" y2="43"/>
+    <line x1="32" y1="35" x2="12" y2="50"/>
+  </g>
+  <line x1="14" y1="12" x2="50" y2="10" stroke="#F26430" stroke-width="2.5" opacity="0.8"/>
+  <circle cx="14" cy="12" r="6" fill="#0EADB5"/>
+  <circle cx="50" cy="10" r="5" fill="#F26430"/>
+  <circle cx="54" cy="43" r="6" fill="#0EADB5"/>
+  <circle cx="12" cy="50" r="5" fill="#F26430"/>
+  <circle cx="32" cy="35" r="11" fill="#0A7B83"/>
+  <circle cx="32" cy="35" r="6" fill="none" stroke="#ffffff" stroke-width="2.5"/>
+</svg>

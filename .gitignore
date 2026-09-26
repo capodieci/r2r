@@ -1,0 +1,23 @@
+# build outputs of the C++ relay (any preset)
+relay/cpp/build/
+relay/cpp/build-*/
+relay/cpp/dist/
+relay/cpp/toolchain/src/
+relay/cpp/toolchain/sysroot/
+relay/cpp/toolchain/*.log
+relay/cpp/*.log
+
+# relay runtime state, never in the repo
+node.key
+peers.json
+genesis-invites.txt
+*.db
+*.db-wal
+*.db-shm
+relay.env
+
+# editor and OS noise
+.DS_Store
+__MACOSX/
+__pycache__/
+*.swp

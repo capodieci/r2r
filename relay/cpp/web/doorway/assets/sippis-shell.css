@@ -1,0 +1,600 @@
+*,*::before,*::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; min-height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  color: #f4f7f8;
+  background: radial-gradient(ellipse at top, var(--bg-tint, #0A7B83) 0%, #11313e 55%, #1A2B3C 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 0 1rem;
+  text-align: center;
+  overflow-x: hidden;
+}
+
+.topbar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.2rem;
+  background: rgba(10, 30, 38, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(14, 173, 181, 0.18);
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #b9c8cd;
+  text-decoration: none;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+.topbar .brand img { height: 3.5rem; width: auto; max-width: 240px; margin-top: -0.9rem; margin-bottom: -0.9rem; object-fit: contain; display: block; }
+.topbar .brand.r2r-brand { display: flex; align-items: center; text-decoration: none; }
+.topbar .brand.r2r-brand svg { height: 3.6rem; width: auto; margin: -0.9rem 0; display: block; }
+
+/* Site-section nav, sits between the brand and the user/lang actions */
+.site-nav {
+  display: flex; align-items: center; gap: 0.15rem;
+  flex-wrap: wrap; flex: 1 1 auto; justify-content: center;
+  padding: 0 0.4rem;
+}
+.site-nav-item {
+  display: inline-block; padding: 0.35rem 0.7rem;
+  color: rgba(244,247,248,0.75); text-decoration: none;
+  font-size: 0.92rem; font-weight: 500;
+  border-radius: 6px; border: 1px solid transparent;
+  transition: background 120ms, color 120ms, border-color 120ms;
+  white-space: nowrap;
+}
+.site-nav-item:hover { color: #f4f7f8; background: rgba(14,173,181,0.10); }
+.site-nav-item.active {
+  color: #f4f7f8; background: rgba(14,173,181,0.18);
+  border-color: rgba(14,173,181,0.4);
+}
+@media (max-width: 720px) {
+  .site-nav { order: 3; flex-basis: 100%; justify-content: flex-start; gap: 0.1rem; padding-top: 0.4rem; }
+  .site-nav-item { font-size: 0.85rem; padding: 0.3rem 0.55rem; }
+}
+.topbar .brand strong { color: #f4f7f8; font-weight: 600; }
+.topbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.topbar .howdy {
+  color: #b9c8cd;
+  font-size: 0.85rem;
+  margin-right: 0.25rem;
+}
+.topbar .howdy strong { color: #f4f7f8; font-weight: 600; }
+
+.topbar-intent-pills {
+  display: inline-flex;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.20);
+  border-radius: 999px;
+  padding: 2px;
+}
+.intent-pill {
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  color: rgba(255,255,255,0.85);
+  border: 0;
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.intent-pill:hover  { background: rgba(255,255,255,0.10); color: #fff; }
+.intent-pill.active { background: #fff; color: var(--primary, #0EADB5); }
+
+.lang-form { display: inline-flex; align-items: center; gap: 0.3rem; }
+.lang-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: rgba(255,255,255,0.06);
+  color: #f4f7f8;
+  border: 1px solid rgba(185, 200, 205, 0.25);
+  border-radius: 999px;
+  padding: 0.4rem 1.6rem 0.4rem 0.7rem;
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #b9c8cd 50%),
+    linear-gradient(135deg, #b9c8cd 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 9px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+.lang-select:hover { border-color: rgba(185, 200, 205, 0.55); background-color: rgba(255,255,255,0.1); }
+.lang-select:focus { outline: 2px solid rgba(14, 173, 181, 0.6); outline-offset: 1px; }
+.lang-select option { color: #1A2B3C; background: #f4f7f8; }
+.lang-apply {
+  background: rgba(14, 173, 181, 0.18);
+  color: #f4f7f8;
+  border: 1px solid rgba(14, 173, 181, 0.55);
+  border-radius: 999px;
+  padding: 0.3rem 0.6rem;
+  font: inherit;
+  cursor: pointer;
+}
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* User menu — avatar dropdown shown on every signed-in page */
+.user-menu { position: relative; }
+.user-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(14, 173, 181, 0.55);
+  background: rgba(14, 173, 181, 0.18);
+  color: #f4f7f8;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.05s ease;
+}
+.user-avatar:hover { background: rgba(14, 173, 181, 0.3); border-color: rgba(14, 173, 181, 0.85); }
+.user-avatar:active { transform: scale(0.95); }
+.user-avatar[aria-expanded="true"] { background: rgba(14, 173, 181, 0.35); border-color: rgba(14, 173, 181, 0.85); }
+.user-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.user-avatar-monogram { line-height: 1; }
+
+.user-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 14rem;
+  padding: 0.4rem 0;
+  background: rgba(17, 49, 62, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(14, 173, 181, 0.25);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  z-index: 50;
+}
+.user-menu-dropdown[hidden] { display: none; }
+.user-menu-dropdown hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 0.4rem 0;
+}
+.user-menu-header {
+  padding: 0.6rem 1rem 0.4rem;
+  text-align: left;
+}
+.user-menu-name { color: #f4f7f8; font-weight: 600; font-size: 0.92rem; }
+.user-menu-email { color: #b9c8cd; font-size: 0.78rem; word-break: break-all; }
+
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 1rem;
+  color: #f4f7f8;
+  text-decoration: none;
+  font-size: 0.88rem;
+}
+.user-menu-item svg { width: 16px; height: 16px; opacity: 0.75; flex-shrink: 0; }
+.user-menu-item:hover { background: rgba(14, 173, 181, 0.12); }
+.user-menu-item:hover svg { opacity: 1; }
+
+/* Settings page — toggle row pattern (dev customizes; we ship a stub) */
+.settings-row { display: flex; align-items: center; padding: 0.55rem 0; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.settings-row:first-of-type { border-top: none; }
+.settings-toggle { display: inline-flex; align-items: center; gap: 0.65rem; color: #f4f7f8; font-size: 0.92rem; cursor: pointer; }
+.settings-toggle input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary, #0EADB5); cursor: pointer; }
+.settings-toggle input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.55; }
+.settings-toggle input[type="checkbox"]:disabled + span { opacity: 0.65; }
+
+.hero {
+  width: 100%;
+  max-width: 56rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: auto 0;
+  padding: 2rem 1rem;
+}
+.logo {
+  width: min(560px, 80vw);
+  height: auto;
+  margin-bottom: 1.5rem;
+  filter: drop-shadow(0 6px 24px rgba(14, 173, 181, 0.25));
+}
+h1 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.5rem, 4.5vw, 2.4rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+h1 code {
+  font: inherit;
+  color: var(--primary, #0EADB5);
+}
+.tagline {
+  margin: 0 0 2.2rem;
+  font-size: clamp(0.95rem, 2.2vw, 1.1rem);
+  color: #b9c8cd;
+  max-width: 36rem;
+}
+.tagline strong { color: var(--secondary, #F26430); font-weight: 600; }
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.2rem;
+  border: 1px solid rgba(14, 173, 181, 0.55);
+  border-radius: 999px;
+  color: #f4f7f8;
+  text-decoration: none;
+  font-size: 0.92rem;
+  background: rgba(14, 173, 181, 0.08);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.cta:hover {
+  background: rgba(14, 173, 181, 0.18);
+  border-color: rgba(14, 173, 181, 0.85);
+  transform: translateY(-1px);
+}
+.cta::after { content: "→"; color: var(--secondary, #F26430); font-weight: 600; }
+
+.config-warn {
+  margin: 2.2rem auto 0;
+  max-width: 36rem;
+  padding: 0.8rem 1rem;
+  border: 1px dashed rgba(242, 100, 48, 0.45);
+  border-radius: 8px;
+  background: rgba(242, 100, 48, 0.08);
+  color: #f4d3c5;
+  font-size: 0.85rem;
+}
+.config-warn code {
+  background: rgba(0,0,0,0.25);
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.85em;
+}
+.config-warn a { color: var(--secondary, #F26430); }
+
+footer {
+  margin-top: auto;
+  padding: 3rem 1rem 0;
+  font-size: 0.78rem;
+  color: #5A6B7C;
+}
+footer a { color: var(--primary, #0EADB5); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+/* Profile page */
+body.profile { justify-content: flex-start; }
+body.profile .hero { text-align: left; gap: 0.7rem; align-items: stretch; }
+body.profile .hero h1 { text-align: left; }
+body.profile .hero .tagline { text-align: left; max-width: none; }
+.profile-grid .cta { align-self: flex-start; }
+.card {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 1rem 1.2rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  text-align: left;
+}
+.card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  color: #b9c8cd;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.card.danger { border-color: rgba(242, 100, 48, 0.35); background: rgba(242, 100, 48, 0.05); }
+.card dl { display: grid; grid-template-columns: 8rem 1fr; gap: 0.4rem 0.8rem; margin: 0; }
+.card dt { color: #5A6B7C; font-size: 0.85rem; }
+.card dd { margin: 0; color: #f4f7f8; word-break: break-word; }
+.card ul.bare { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+.card ul.bare li { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; color: #f4f7f8; }
+.card .muted { color: #5A6B7C; }
+.card code { background: rgba(0,0,0,0.25); padding: 0.05rem 0.3rem; border-radius: 3px; font-size: 0.85em; }
+
+.pill {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.07);
+  color: #b9c8cd;
+  border: 1px solid rgba(255,255,255,0.1);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.pill.primary { background: rgba(14, 173, 181, 0.18); color: var(--primary, #0EADB5); border-color: rgba(14, 173, 181, 0.35); }
+.pill.ok      { background: rgba(34, 197, 94, 0.15);  color: #86efac;  border-color: rgba(34, 197, 94, 0.3); }
+.pill.warn    { background: rgba(242, 100, 48, 0.15); color: #fab088; border-color: rgba(242, 100, 48, 0.35); }
+
+/* Empty-state row inside a profile card: muted line + inline CTA button. */
+.card .empty {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem 0.9rem;
+}
+.card .empty p { margin: 0; color: #5A6B7C; }
+.cta-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid rgba(14, 173, 181, 0.45);
+  border-radius: 999px;
+  color: #f4f7f8;
+  text-decoration: none;
+  font-size: 0.82rem;
+  background: rgba(14, 173, 181, 0.06);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.cta-inline:hover {
+  background: rgba(14, 173, 181, 0.16);
+  border-color: rgba(14, 173, 181, 0.75);
+}
+.cta-inline::after { content: "→"; color: var(--secondary, #F26430); font-weight: 600; }
+/* Disabled inline CTA — used on "Disconnect" until v1 ships the endpoint. */
+button.cta-inline { font: inherit; cursor: pointer; }
+.cta-inline[disabled],
+.cta-inline.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+/* Ghost variant — used as the modal Cancel button. No arrow, plainer border. */
+.cta-inline.ghost {
+  background: transparent;
+  border-color: rgba(255,255,255,0.18);
+}
+.cta-inline.ghost:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.3);
+}
+.cta-inline.ghost::after { content: ""; }
+
+/* Share-picker modal (driven by /js/profile-share.js). Click-blocking
+   overlay + centered dialog. Lives on the shell's dark surface — fields
+   contrast against rgba(255,255,255,0.04) cards. */
+.share-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+.share-dialog {
+  background: #1a2226;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 1.4rem 1.4rem 1.2rem;
+  max-width: 30rem;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  color: #f4f7f8;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+.share-dialog h2 {
+  margin: 0 0 0.6rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #f4f7f8;
+}
+.share-dialog .lede {
+  color: #b9c8cd;
+  font-size: 0.9rem;
+  margin: 0 0 1rem;
+}
+.share-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 1rem;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 4px;
+}
+.share-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.share-row:hover { background: rgba(255,255,255,0.05); }
+.share-row input[type="radio"] {
+  accent-color: var(--primary, #0EADB5);
+  width: 16px; height: 16px;
+  cursor: pointer;
+  margin: 0;
+}
+.share-row.shared {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.share-row.shared:hover { background: transparent; }
+.share-row.shared input[type="radio"] { cursor: not-allowed; }
+.share-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  text-align: center;
+}
+.share-primary {
+  font-size: 0.92rem;
+  word-break: break-word;
+  color: #f4f7f8;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+}
+.share-chips {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.share-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+.share-dialog .alert.error {
+  background: rgba(242, 100, 48, 0.15);
+  border: 1px solid rgba(242, 100, 48, 0.4);
+  color: #fab088;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 0.7rem;
+  font-size: 0.85rem;
+}
+.pill.muted {
+  background: rgba(255,255,255,0.05);
+  color: #5A6B7C;
+}
+
+/* Per-row × unshare button next to chips on the profile cards. */
+.card ul.bare .unshare-btn {
+  margin-left: auto;            /* pushes to the far right of the flex row */
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #5A6B7C;
+  width: 22px; height: 22px;
+  border-radius: 999px;
+  line-height: 1;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.card ul.bare .unshare-btn:hover {
+  color: #fab088;
+  border-color: rgba(242, 100, 48, 0.55);
+  background: rgba(242, 100, 48, 0.08);
+}
+.card ul.bare .unshare-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Bottom-of-card action row — "+ Share another …" when the list is
+   non-empty. Sits flush left, secondary visual weight. */
+.card .card-actions {
+  margin-top: 0.8rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Add-new modal — same dark surface as the share picker, with form
+   fields styled to match the shell rather than account.sippis.com's
+   white surface. Used by every step of /js/profile-share.js's
+   openAddModal flow (input email/phone, verify code, pick chain). */
+.share-dialog .add-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0 0 1rem;
+}
+.share-dialog .add-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #b9c8cd;
+}
+.share-dialog .add-input {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 6px;
+  color: #f4f7f8;
+  padding: 0.55rem 0.75rem;
+  font: inherit;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color .15s, background .15s;
+}
+.share-dialog .add-input:focus {
+  border-color: var(--primary, #0EADB5);
+  background: rgba(255,255,255,0.06);
+}
+.share-dialog .add-input::placeholder { color: #5A6B7C; }
+.share-dialog select.add-input { cursor: pointer; }
+
+/* Code-entry compound: optional "ABC-" prefix box inline-left of a
+   centered 6-digit input. Mirrors account.sippis.com's enterLoginCode
+   layout so the visual is consistent across the platform. */
+.share-dialog .code-input-wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 0.4rem;
+}
+.share-dialog .code-input-prefix {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 6px;
+  padding: 0.55rem 0.7rem;
+  color: #b9c8cd;
+  font: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+}
+.share-dialog .code-input {
+  flex: 1;
+  text-align: center;
+  letter-spacing: 0.3em;
+  font: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 1.05rem;
+}
+
+/* --- stability fixes (2026-08-31, relay-side; fold into the next bundle) ---
+   The body is a centered flex column, which sizes children to their content:
+   a definite width stops docs layouts re-measuring when an accordion opens.
+   The stable scrollbar gutter stops the vertical scrollbar's appearance
+   nudging the centered content sideways. */
+html { scrollbar-gutter: stable; }
+.layout { width: 100%; }

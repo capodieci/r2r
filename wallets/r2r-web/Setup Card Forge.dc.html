@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#5980a6"/><g fill="none" stroke="#f2f2f3" stroke-width="3"><rect x="32" y="32" width="36" height="36"/><rect x="38" y="38" width="9" height="9" fill="#f2f2f3" stroke="none"/><rect x="53" y="38" width="9" height="9" fill="#f2f2f3" stroke="none"/><rect x="38" y="53" width="9" height="9" fill="#f2f2f3" stroke="none"/></g></svg></template>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-39bde5bd-cb26-4a7d-80ca-c7d4d2c4b830/styles.css">
+  <script src="_ds/industry-39bde5bd-cb26-4a7d-80ca-c7d4d2c4b830/_ds_bundle.js"></script>
+  <script src="app/sha3.js"></script>
+  <script src="app/qrcode.js"></script>
+  <style>
+    html,body{margin:0;padding:0;background:var(--color-bg);color:var(--color-text)}
+    a{color:var(--color-accent-700)} a:hover{color:var(--color-accent-900)}
+  </style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column">
+  <div style="display:flex;align-items:center;gap:12px;padding:14px 22px;border-bottom:1px solid var(--color-neutral-300)">
+    <div style="width:12px;height:12px;background:var(--color-accent)"></div>
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:20px;text-transform:uppercase;letter-spacing:.03em"><span style="font-family:Arial">R2Я</span> — Setup card forge</div>
+    <span class="tag tag-outline">Offline tool</span>
+    <div style="flex:1"></div>
+    <span style="font-size:12px;color:var(--color-neutral-600)">Runs entirely in this file — nothing leaves this page.</span>
+  </div>
+  <div style="flex:1;display:flex;flex-wrap:wrap;align-items:flex-start">
+    <div style="flex:1 1 380px;min-width:300px;max-width:620px;padding:22px;box-sizing:border-box;display:flex;flex-direction:column;gap:16px">
+      <div class="field">
+        <label>Relay address(es)</label>
+        <textarea class="input" ref="{{relaysRef}}" onInput="{{onRelays}}" rows="2" placeholder="ws://203.0.113.7:8787&#10;(one per line or comma-separated)" style="width:100%;box-sizing:border-box;font-family:monospace;font-size:13px"></textarea>
+        <div style="font-size:12px;color:var(--color-neutral-600);margin-top:6px">Printed into the card — the wallet connects here on first scan.</div>
+      </div>
+      <div class="field">
+        <label>Card holder (optional)</label>
+        <input class="input" ref="{{labelRef}}" onInput="{{onLabel}}" placeholder="e.g. Ana" style="width:100%;box-sizing:border-box">
+        <div style="font-size:12px;color:var(--color-neutral-600);margin-top:6px">Only printed on the card so you know whose it is. Leaks nothing.</div>
+      </div>
+      <div class="field">
+        <label>Reissue — existing card key (optional)</label>
+        <input class="input" ref="{{reissueRef}}" onInput="{{onReissue}}" placeholder="64-hex card key from a previous card" style="width:100%;box-sizing:border-box;font-family:monospace;font-size:12px">
+        <div style="font-size:12px;color:var(--color-neutral-600);margin-top:6px">{{reissueNote}}</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="btn btn-primary blueprint" style="position:relative" onClick="{{onDownload}}" title="Save the card as a standalone HTML file to print or keep on a USB stick"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Download card</button>
+        <button class="btn btn-secondary" onClick="{{onNewKey}}">New card key</button>
+      </div>
+      <sc-if value="{{note}}" hint-placeholder-val="{{false}}"><div style="font-size:12.5px;color:var(--color-accent-700)">{{note}}</div></sc-if>
+      <div class="blueprint" style="position:relative;border:1px solid var(--color-neutral-400);padding:14px 16px;font-size:12.5px;line-height:1.55;color:var(--color-neutral-700)">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-family:var(--font-heading);text-transform:uppercase;letter-spacing:.06em;font-size:13px;color:var(--color-text);margin-bottom:6px">How it works</div>
+        Each card carries a fresh random 256-bit <b>card key</b> and the relay address — <b>no identity</b>. The holder scans it in the wallet and chooses a PIN (at least 8 characters — an attacker holding the card key can grind short numeric PINs offline, so letters and length matter); card&nbsp;key&nbsp;+&nbsp;PIN derive where their encrypted identity lives on the relay. A photographed card is useless without the PIN, and there is nothing on it to brute-force offline.
+        <div style="margin-top:8px">Give each friend their <b>own</b> card. Use a clean, extension-free browser. Keep this forge file offline (USB stick) — it can re-download a card only while this page is open; a new key is minted on every load.</div>
+      </div>
+    </div>
+    <div style="flex:1 1 340px;min-width:300px;padding:22px 32px 40px;box-sizing:border-box;display:flex;justify-content:center">
+      <div style="display:flex;flex-direction:column;gap:14px;align-items:center">
+        <div class="blueprint" style="position:relative;border:1px solid var(--color-neutral-500);background:#fff;width:280px;max-width:100%;padding:20px 20px 16px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:12px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="align-self:stretch;display:flex;align-items:center;gap:8px">
+            <div style="width:9px;height:9px;background:var(--color-accent)"></div>
+            <div style="font-family:Arial;font-weight:600;font-size:14px;text-transform:uppercase;letter-spacing:.06em">{{appName}}</div>
+          </div>
+          <div style="align-self:stretch;height:1px;background:var(--color-neutral-300)"></div>
+          <div ref="{{qrRef}}" style="width:176px;height:176px;display:grid;place-items:center;border:1px solid var(--color-neutral-300);padding:6px;background:#fff;box-sizing:content-box"></div>
+          <sc-if value="{{noPayload}}" hint-placeholder-val="{{true}}"><div style="font-size:11px;color:var(--color-neutral-500)">Enter a relay to render the QR</div></sc-if>
+          <div style="text-align:center">
+            <div style="font-family:var(--font-heading);font-weight:600;font-size:20px;text-transform:uppercase;letter-spacing:.1em">Setup card</div>
+            <sc-if value="{{hasLabel}}" hint-placeholder-val="{{false}}"><div style="font-family:var(--font-heading);font-size:16px;color:var(--color-neutral-700)">{{labelShown}}</div></sc-if>
+            <div style="font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--color-neutral-500);margin-top:6px">Scan in the app and choose a PIN</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--color-neutral-600);text-align:center;max-width:300px">Preview — the downloaded file is a standalone, print-ready copy. The relay and card key live only inside the QR; nothing sensitive is printed in clear.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;appName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;R2Я&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { pepper: '', relays: '', label: '', note: '', reissue: '' };
+  effPepper() { var r = String(this.state.reissue || '').trim().toLowerCase(); return /^[0-9a-f]{64}$/.test(r) ? r : this.state.pepper; }
+  ref(name) { var self = this; if (!this._refs) this._refs = {}; if (!this._els) this._els = {}; if (!this._refs[name]) this._refs[name] = function (el) { if (!self._els) self._els = {}; self._els[name] = el; }; return this._refs[name]; }
+  componentDidMount() { this._els = this._els || {}; this.newKey(); }
+  newKey() { var u = new Uint8Array(32); crypto.getRandomValues(u); var h = ''; for (var i = 0; i < 32; i++) h += (u[i] < 16 ? '0' : '') + u[i].toString(16); if (this._els && this._els.reissue) this._els.reissue.value = ''; this.setState({ pepper: h, reissue: '', note: '' }); }
+  relayList() { return String(this.state.relays || '').split(/[\n,]+/).map(function (s) { return s.trim(); }).filter(Boolean); }
+  payload() { var r = this.relayList().join(','); var p = this.effPepper(); return (r && p) ? 'R2RSC1:' + p + ':' + r : ''; }
+  serial() { var p = this.effPepper(); if (!p || !window.sha3_256) return '——————'; return window.sha3_256(p).slice(0, 6).toUpperCase(); }
+  drawQR() {
+    var el = this._els && this._els.qr; if (!el) return;
+    var p = this.payload();
+    if (this._qrFor === p) return; this._qrFor = p;
+    el.innerHTML = '';
+    if (p) try { new QRCode(el, { text: p, width: 150, height: 150, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { }
+  }
+  componentDidUpdate() { this.drawQR(); }
+  qrDataUrl() {
+    var el = this._els && this._els.qr; if (!el) return null;
+    var cv = el.querySelector('canvas'); if (cv) try { return cv.toDataURL('image/png'); } catch (e) { }
+    var img = el.querySelector('img'); return img ? img.src : null;
+  }
+  cardHtml() {
+    var app = this.props.appName || 'R-2-R';
+    var esc = function (s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+    var label = esc(this.state.label);
+    var issued = new Date().toISOString().slice(0, 10);
+    var qr = this.qrDataUrl(); if (!qr) return null;
+    var payload = esc(this.payload());
+    return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(app) + ' setup card — ' + (label || 'unnamed') + '</title><style>' +
+      'body{margin:0;background:#f2f2f3;color:#1d1f20;font-family:Barlow,"Segoe UI",Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+      '.wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;box-sizing:border-box}' +
+      '.card{position:relative;width:2.6in;background:#fff;border:1px solid #6b7075;padding:.2in;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:.12in}' +
+      '.mark{position:absolute;font:400 12px/1 monospace;color:#5980a6}.tl{top:-6px;left:-4px}.tr{top:-6px;right:-4px}.bl{bottom:-6px;left:-4px}.br{bottom:-6px;right:-4px}' +
+      '.hd{align-self:stretch;display:flex;align-items:center;gap:7px}.sq{width:8px;height:8px;background:#5980a6}' +
+      '.app{font-family:Arial,sans-serif;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.06em}' +
+      '.ser{margin-left:auto;font:400 9px monospace;color:#6b7075}' +
+      '.rule{align-self:stretch;height:1px;background:#c9ccce}' +
+      '.qr{border:1px solid #c9ccce;padding:5px;background:#fff}.qr img{display:block;width:1.7in;height:1.7in;image-rendering:pixelated}' +
+      '.ttl{font-family:"Barlow Condensed","Arial Narrow",Arial,sans-serif;font-weight:600;font-size:19px;text-transform:uppercase;letter-spacing:.1em;text-align:center}' +
+      '.holder{font-family:"Barlow Condensed","Arial Narrow",Arial,sans-serif;font-size:15px;color:#43474b;text-align:center;margin-top:2px}' +
+      '.meta{font-size:8.5px;letter-spacing:.05em;color:#8a8f94;text-align:center;text-transform:uppercase}' +
+      '.help{max-width:4.8in;font-size:12.5px;line-height:1.55;color:#43474b}' +
+      '.pay{font:400 9px/1.5 monospace;word-break:break-all;color:#8a8f94;margin-top:8px}' +
+      '.btn{font:600 13px "Barlow Condensed","Arial Narrow",Arial,sans-serif;text-transform:uppercase;letter-spacing:.05em;background:#5980a6;color:#f2f2f3;border:0;padding:9px 22px;cursor:pointer}' +
+      '.cpy{font:600 10px monospace;text-transform:uppercase;letter-spacing:.04em;background:#fff;color:#5980a6;border:1px solid #5980a6;padding:2px 8px;cursor:pointer;vertical-align:1px;margin-left:4px}' +
+      '@media print{body{background:#fff}.wrap{min-height:auto}.no-print{display:none}}' +
+      '</style></head><body><div class="wrap">' +
+      '<div class="card"><span class="mark tl">+</span><span class="mark tr">+</span><span class="mark bl">+</span><span class="mark br">+</span>' +
+      '<div class="hd"><div class="sq"></div><div class="app">' + esc(app) + '</div></div>' +
+      '<div class="rule"></div>' +
+      '<div class="qr"><img src="' + qr + '" alt="setup QR"></div>' +
+      '<div><div class="ttl">Setup card</div>' + (label ? '<div class="holder">' + label + '</div>' : '') + '</div>' +
+      '<div class="meta">Scan in the app and choose a PIN</div>' +
+      '</div>' +
+      '<div class="help no-print"><b>Print this card</b> and give it to its holder — or keep this file on a USB stick as the digital copy. It contains the card key: store it offline, never in email or cloud drives. Nothing sensitive is printed in clear — the relay and card key live only inside the QR. If the camera ever fails, this text can be typed into the app instead <button class="cpy" onclick="var b=this;navigator.clipboard.writeText(document.getElementById(\'pay\').textContent).then(function(){b.textContent=\'copied!\';setTimeout(function(){b.textContent=\'copy\';},1500);})">copy</button>' +
+      '<div class="pay" id="pay">' + payload + '</div></div>' +
+      '<button class="btn no-print" onclick="window.print()">Print</button>' +
+      '</div></body></html>';
+  }
+  renderVals() {
+    var self = this, s = this.state;
+    setTimeout(function () { self.drawQR(); }, 0);
+    return {
+      appName: this.props.appName || 'R-2-R',
+      relaysRef: this.ref('relays'), labelRef: this.ref('label'), qrRef: this.ref('qr'),
+      onRelays: function (e) { self.setState({ relays: e.target.value }); },
+      onLabel: function (e) { self.setState({ label: e.target.value }); },
+      reissueRef: this.ref('reissue'),
+      onReissue: function (e) { self.setState({ reissue: e.target.value }); },
+      reissueNote: (function () {
+        var r = String(s.reissue || '').trim();
+        if (!r) return 'Paste the old card\u2019s key (from the wallet: Settings \u2192 Moving relay \u2192 \u201cCopy my card key\u201d) to reprint for the same identity \u2014 e.g. after a relay move. Leave empty for a fresh card.';
+        if (/^[0-9a-f]{64}$/i.test(r)) return 'Reissuing \u2014 same identity, new print. List the NEW relay first and keep the old one too; the wallet tries them in order until one answers.';
+        return 'Not a valid 64-hex card key \u2014 a fresh key is being used instead.';
+      })(),
+      onNewKey: function () { self.newKey(); },
+      onDownload: function () {
+        if (!self.payload()) { self.setState({ note: 'Enter at least one relay address first.' }); return; }
+        var html = self.cardHtml();
+        if (!html) { self.setState({ note: 'QR not ready yet — try again.' }); return; }
+        var name = (s.label ? s.label.replace(/[^\w-]+/g, '_') + ' - ' : '') + 'setup card.html';
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+        a.download = name; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+        self.setState({ note: 'Card downloaded. Mint a new key before making the next friend\u2019s card.' });
+      },
+      note: s.note, serial: this.serial(),
+      hasLabel: !!String(s.label || '').trim(), labelShown: s.label,
+      issued: new Date().toISOString().slice(0, 10),
+      noPayload: !this.payload()
+    };
+  }
+}
+</script>
+</body>
+</html>

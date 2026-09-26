@@ -1,0 +1,55 @@
+[Unit]
+Description=R2R privacy-first peer-to-peer messaging relay
+Documentation=file:///usr/local/share/doc/r2r-relay/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=r2r
+Group=r2r
+
+# Put R2R_ADVERTISE=<public-ip>:8787 here so peers can route back to this node.
+# Anything the relay accepts on the command line has an R2R_* equivalent.
+EnvironmentFile=-/etc/r2r/relay.env
+ExecStart=/usr/local/bin/r2r-relay --data-dir /var/lib/r2r
+
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=20s
+LimitNOFILE=65536
+
+# --- sandboxing -------------------------------------------------------------
+# The relay needs exactly two paths: its state directory (read-write) and its
+# TLS material (read-only). Everything else is off limits.
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/r2r
+ReadOnlyPaths=/etc/r2r
+ProtectKernelTunables=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectProc=invisible
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_INET AF_INET6
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+# The relay keeps no files of its own beyond the journal.
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

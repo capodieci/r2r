@@ -1,0 +1,2 @@
+#!/bin/sh
+exec "zig" c++ -target riscv64-linux-musl -mcpu=baseline_rv64 "$@"

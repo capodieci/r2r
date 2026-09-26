@@ -1,0 +1,39 @@
+[Unit]
+Description=Sync R2R relay metrics into MariaDB for the dashboard
+Documentation=file:///usr/local/share/doc/r2r-relay/README.md
+After=network-online.target mariadb.service r2r-relay.service
+Wants=mariadb.service
+
+[Service]
+Type=oneshot
+User=r2r
+Group=r2r
+ExecStart=/usr/local/bin/r2r-metrics-sync --once
+TimeoutStartSec=120
+
+# Authentication is unix_socket, so the identity is the OS user and there is no
+# password on disk. Nothing here needs write access to anything but the socket.
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+CapabilityBoundingSet=
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

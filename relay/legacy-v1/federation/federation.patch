@@ -1,0 +1,71 @@
+--- relay-server.js	2026-08-04 18:19:38.177369796 +0000
++++ federation/relay-server-federated.js	2026-08-04 18:57:11.811375112 +0000
+@@ -36,6 +36,32 @@
+ function acctUsed(pub) { let t = 0; try { fs.readdirSync(acctDir(pub, 'journal')).forEach(f => { try { t += fs.statSync(path.join(acctDir(pub, 'journal'), f)).size; } catch (e) { } }); } catch (e) { } return t; }
+ function nextSeq(pub) { fs.mkdirSync(acctDir(pub, 'journal'), { recursive: true }); let mx = 0; fs.readdirSync(acctDir(pub, 'journal')).forEach(f => { const v = parseInt(f, 10); if (v > mx) mx = v; }); return mx + 1; }
+ 
++
++/* ---------- federation: hand a message to the recipient's relay ---------- */
++const RK_FILE = path.join(DATA, 'relay.key');
++let RELAY_KEY;
++try { RELAY_KEY = crypto.createPrivateKey(fs.readFileSync(RK_FILE)); }
++catch (e) {
++  RELAY_KEY = crypto.generateKeyPairSync('ed25519').privateKey;
++  fs.writeFileSync(RK_FILE, RELAY_KEY.export({ format: 'pem', type: 'pkcs8' }), { mode: 0o600 });
++}
++const RELAY_PUB = (() => { const d = crypto.createPublicKey(RELAY_KEY).export({ format: 'der', type: 'spki' }); return d.subarray(d.length - 32).toString('hex'); })();
++const SELF_RELAY = process.env.SELF_RELAY || '';
++function relayAuthQuery() {
++  const ts = Math.floor(Date.now() / 1000);
++  return 'pub=' + RELAY_PUB + '&ts=' + ts + '&sig=' + crypto.sign(null, Buffer.from('R2R-AUTH|' + ts), RELAY_KEY).toString('hex');
++}
++function forwardTo(target, item, done) {
++  let u; try { u = new URL(target.includes('://') ? target : 'http://' + target); } catch (e) { return done(false); }
++  const body = JSON.stringify({ to: item.to, id: item.id, from: item.from, ts: item.ts, payload: item.payload });
++  const rq = http.request({ hostname: u.hostname, port: u.port || 8787, path: '/forward?' + relayAuthQuery(), method: 'POST',
++      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }, timeout: 8000 },
++    res => { res.resume(); done(res.statusCode === 200); });
++  rq.on('error', () => done(false));
++  rq.on('timeout', () => { rq.destroy(); done(false); });
++  rq.end(body);
++}
++
+ /* ---------- auth: ?pub&ts&sig, sig = ed25519("R2R-AUTH|"+ts) ---------- */
+ function verifyAuth(q) {
+   try {
+@@ -184,6 +210,24 @@
+     }
+     return json(404, { error: 'not_found' });
+   }
++  if (route === '/forward' && req.method === 'POST') {
++    if (!pub) return json(401, { error: 'auth' });
++    const chunks = []; let size = 0, dead = false;
++    req.on('data', c => { size += c.length; if (size > MAX_PAYLOAD + 4096) { dead = true; json(413, { error: 'too_big' }); req.destroy(); return; } chunks.push(c); });
++    req.on('end', () => {
++      if (dead) return;
++      let m; try { m = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch (e) { return json(400, { error: 'bad_json' }); }
++      const to = String(m.to || '').toLowerCase(), id = String(m.id || ''), from = String(m.from || '').toLowerCase();
++      if (!/^[0-9a-f]{64}$/.test(to) || !/^[0-9a-f]{4,32}$/.test(id) || !/^[0-9a-f]{64}$/.test(from)) return json(400, { error: 'args' });
++      if (typeof m.payload !== 'string' || m.payload.length > MAX_PAYLOAD) return json(400, { error: 'args' });
++      const item = { id, from, to, ts: Date.now(), payload: m.payload };
++      qPush(to, item);
++      const rc = SOCKS.get(to);
++      if (rc) wsSend(rc.sock, { type: 'msg', id, from, ts: item.ts, payload: m.payload });
++      json(200, { ok: true, queued: !rc });
++    });
++    return;
++  }
+   json(404, { error: 'not_found' });
+ });
+ 
+@@ -278,6 +322,10 @@
+     if (typeof m.payload !== 'string' || m.payload.length > MAX_PAYLOAD) return;
+     if (!rateOk(st.pub)) { wsSend(st.sock, { type: 'sent', id, queued: false, error: 'rate' }); return; }
+     const item = { id, from: st.pub, to, ts: Date.now(), payload: m.payload };
++    if (m.relay && typeof m.relay === 'string' && m.relay !== SELF_RELAY) {
++      forwardTo(m.relay, item, ok => wsSend(st.sock, { type: 'sent', id, queued: true, forwarded: ok }));
++      return;
++    }
+     const rc = SOCKS.get(to);
+     qPush(to, item);                       // queue first — delete on ack, so delivery survives a drop
+     if (rc) wsSend(rc.sock, { type: 'msg', id, from: st.pub, ts: item.ts, payload: m.payload });

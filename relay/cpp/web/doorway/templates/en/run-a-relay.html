@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Stand up a full R2R relay on a Linux server with one command. Operator install guide and admin reference.">
+<meta name="robots" content="index,follow">
+<title>Run your own R2R relay</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="/sippis-shell.css?v=1786369720">
+<style>
+  :root {
+    --primary: #0EADB5;
+    --secondary: #F26430;
+    --bg-tint: #09797E;
+    --pane: rgba(0,0,0,0.20);
+    --pane-border: rgba(255,255,255,0.08);
+    --text: #f4f7f8;
+    --muted: rgba(255,255,255,0.7);
+    --dim: rgba(255,255,255,0.55);
+    --code-bg: #0b1a22;
+    --code-fg: #e5f5f7;
+    --token: #f6c26b;
+    --token-bg: rgba(246,194,107,0.14);
+    --info-bg: rgba(255,255,255,0.06);
+    --info-bd: rgba(255,255,255,0.15);
+    --imp-bg: rgba(14,173,181,0.10);
+    --imp-bd: var(--primary);
+    --warn-bg: rgba(226,120,60,0.10);
+    --warn-bd: #e2783c;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --text: #16232a;
+      --muted: rgba(20,30,40,0.75);
+      --dim: rgba(20,30,40,0.55);
+      --pane: rgba(0,0,0,0.04);
+      --pane-border: rgba(0,0,0,0.10);
+      --info-bg: rgba(20,40,60,0.05);
+      --info-bd: rgba(20,40,60,0.15);
+    }
+  }
+  :root[data-theme="dark"] {
+    --text: #f4f7f8; --muted: rgba(255,255,255,0.7); --dim: rgba(255,255,255,0.55);
+    --pane: rgba(0,0,0,0.20); --pane-border: rgba(255,255,255,0.08);
+  }
+  body { color: var(--text); background: radial-gradient(ellipse at top, var(--bg-tint,#0A7B83) 0%, #11313e 55%, #1A2B3C 100%); }
+  @media (prefers-color-scheme: light) {
+    body:not([data-theme="dark"] body) { background: linear-gradient(180deg, #f6fafb 0%, #e6eff2 100%); color: #16232a; }
+  }
+
+  .layout {
+    display: grid; grid-template-columns: 240px minmax(0,1fr); gap: 32px;
+    max-width: 1140px; margin: 0 auto; padding: 24px 20px 80px; align-items: start;
+    text-align: left;      /* docs pages left-align body, not center */
+  }
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    nav.toc { position: static !important; margin-bottom: 24px; }
+  }
+
+  /* Sticky TOC — top offset accounts for the sticky topbar height so the two
+     don't overlap. Bump if the topbar height changes. */
+  nav.toc {
+    position: sticky; top: 96px; padding: 16px; background: var(--pane);
+    border: 1px solid var(--pane-border); border-radius: 10px; font-size: 14px;
+  }
+  nav.toc h2 { color: var(--primary); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px; }
+  nav.toc ol { list-style: none; padding: 0; margin: 0; counter-reset: toc; }
+  nav.toc ol li { counter-increment: toc; padding: 4px 0; }
+  nav.toc ol li::before { content: counter(toc, decimal-leading-zero) ". "; color: var(--dim); font-family: monospace; font-size: 12px; }
+  nav.toc a { color: var(--text); text-decoration: none; }
+  nav.toc a:hover { color: var(--primary); }
+
+  /* min-width:0 lets minmax(0,1fr) actually clamp the article column — without
+     it, long inline content (URLs, code) can force the whole page wider. */
+  .layout > article { min-width: 0; }
+
+  article { text-align: left; }
+  article h1 {
+    font-size: clamp(28px, 4.5vw, 40px); margin: 0 0 8px;
+    letter-spacing: -0.5px; text-align: center;    /* only the title is centered */
+  }
+  article h1 .accent { color: var(--primary); }
+  article h1 .h1-sub {
+    display: block; margin-top: 4px;
+    font-size: 0.72em; font-weight: 500; letter-spacing: -0.3px;
+    color: var(--muted, rgba(255,255,255,0.72));
+  }
+  article h2 {
+    color: var(--primary); font-size: 22px; margin: 44px 0 12px;
+    padding-top: 20px; border-top: 1px solid var(--pane-border);
+    scroll-margin-top: 108px;                       /* space below sticky topbar */
+  }
+  article h2 a.anchor { color: inherit; text-decoration: none; }
+  article h2 a.anchor:hover::after { content: " #"; color: var(--dim); font-weight: 400; }
+  article h3 { color: var(--primary); font-size: 16px; margin: 24px 0 8px; text-transform: uppercase; letter-spacing: 1px; }
+  article p, article li { line-height: 1.6; color: var(--text); }
+  article a { color: var(--primary); }
+
+  .lede { font-size: 18px; color: var(--muted); text-align: left; }
+
+  /* Code blocks with copy button */
+  .code {
+    position: relative; background: var(--code-bg); color: var(--code-fg);
+    border-radius: 10px; padding: 14px 16px; padding-right: 100px;
+    font-family: "SFMono-Regular", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    font-size: 13.5px; line-height: 1.55; overflow-x: auto; margin: 12px 0;
+    border: 1px solid rgba(255,255,255,0.08);
+    text-align: left;
+  }
+  .code pre { margin: 0; white-space: pre; }
+  .code .copy {
+    position: absolute; top: 8px; right: 8px;
+    background: rgba(255,255,255,0.08); color: var(--code-fg);
+    border: 1px solid rgba(255,255,255,0.14); padding: 4px 10px;
+    font: inherit; font-size: 12px; border-radius: 6px; cursor: pointer;
+  }
+  .code .copy:hover { background: rgba(255,255,255,0.16); }
+  .code .copy.ok { background: rgba(80,200,120,0.25); color: #cff5db; }
+
+  .tok {
+    display: inline; padding: 1px 6px; border-radius: 4px;
+    background: var(--token-bg); color: var(--token); font-weight: 600;
+  }
+  .hero-code { font-size: 15px; padding: 18px 18px; padding-right: 110px; }
+
+  /* Callouts */
+  .callout {
+    padding: 12px 16px; border-left: 3px solid; border-radius: 6px;
+    margin: 16px 0; font-size: 15px; line-height: 1.55; text-align: left;
+  }
+  .callout.info { background: var(--info-bg); border-left-color: var(--info-bd); }
+  .callout.important { background: var(--imp-bg); border-left-color: var(--imp-bd); }
+  .callout.warn { background: var(--warn-bg); border-left-color: var(--warn-bd); }
+  .callout b { display: block; margin-bottom: 4px; }
+
+  /* Tables */
+  table.compact { width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0; }
+  table.compact th, table.compact td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--pane-border); }
+  table.compact th { background: var(--pane); color: var(--primary); font-weight: 700; }
+  table.compact td code { background: var(--pane); padding: 1px 6px; border-radius: 4px; }
+
+  /* Two-column knows/doesn't-know layout */
+  .knows-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 12px; }
+  .knows-grid .col { padding: 16px 18px; border-radius: 10px; background: var(--pane); border-top: 3px solid var(--primary); }
+  .knows-grid .col.warn { border-top-color: var(--warn-bd); }
+  .knows-grid h4 { margin: 0 0 8px; font-size: 15px; }
+  .knows-grid ul { margin: 8px 0 0; padding-left: 18px; }
+  .knows-grid li { margin: 6px 0; font-size: 14px; }
+
+  /* FAQ accordion */
+  details.faq {
+    background: var(--pane); border: 1px solid var(--pane-border); border-radius: 8px;
+    padding: 12px 16px; margin: 8px 0;
+    width: 100%; box-sizing: border-box;                /* full column width, always */
+  }
+  details.faq summary {
+    cursor: pointer; font-weight: 600; color: var(--text);
+    list-style: none;
+    display: block; width: 100%;                        /* summary bar is full-width regardless of open/closed */
+  }
+  details.faq summary::-webkit-details-marker { display: none; }
+  details.faq summary::before { content: "▸ "; color: var(--primary); display: inline-block; width: 1.1em; }
+  details.faq[open] summary::before { content: "▾ "; }
+  details.faq[open] { padding-bottom: 16px; }
+  details.faq p, details.faq li {
+    margin: 8px 0; font-size: 14.5px;
+    overflow-wrap: anywhere;                            /* long strings wrap inside the box, don't push it wider */
+  }
+
+  /* Mesh diagram (network page) */
+  .mesh-svg { display: block; max-width: 520px; width: 100%; height: auto; margin: 12px auto 0; background: var(--pane); border: 1px solid var(--pane-border); border-radius: 10px; padding: 16px; }
+
+  /* footer */
+  .page-footer { color: var(--dim); font-size: 13px; text-align: center; padding: 24px 0 0; margin-top: 40px; border-top: 1px solid var(--pane-border); }
+</style>
+</head>
+<body>
+<header class="topbar">
+    <a class="brand r2r-brand" href="/" aria-label="R2Я home">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="118 45 360 250" width="360" height="250" aria-label="R2R decentralised mesh: independent relays gossip and route encrypted payloads with no central server." role="img">
+  <defs>
+    <style><![CDATA[
+      @keyframes lineIn  {0%{stroke-dashoffset:300;opacity:0}30%{opacity:.4}100%{stroke-dashoffset:0;opacity:.4}}
+      @keyframes lineInA {0%{stroke-dashoffset:300;opacity:0}30%{opacity:.35}100%{stroke-dashoffset:0;opacity:.35}}
+      .cn{stroke:#0A7B83;stroke-width:2.5;fill:none;stroke-dasharray:300;stroke-dashoffset:300;animation:lineIn 1.5s ease-out forwards}
+      .ca{stroke:#F26430;stroke-width:2;fill:none;stroke-dasharray:300;stroke-dashoffset:300;animation:lineInA 1.5s ease-out forwards}
+      .l1{animation-delay:.1s}.l2{animation-delay:.2s}.l3{animation-delay:.3s}
+      .l4{animation-delay:.4s}.l5{animation-delay:.5s}.l6{animation-delay:.6s}
+      .l7{animation-delay:.7s}.l8{animation-delay:.8s}.l9{animation-delay:.9s}
+      .l10{animation-delay:1s}.l11{animation-delay:1.1s}.l12{animation-delay:1.2s}
+      .l13{animation-delay:1.3s}.l14{animation-delay:1.4s}.l15{animation-delay:1.5s}
+      .l16{animation-delay:1.6s}.l17{animation-delay:1.7s}.l18{animation-delay:1.8s}
+      .l19{animation-delay:1.9s}
+      @keyframes nIn{0%{opacity:0;transform:scale(0)}60%{opacity:1}80%{transform:scale(1.15)}100%{opacity:1;transform:scale(1)}}
+      .np{fill:#0A7B83;opacity:0;transform-box:fill-box;transform-origin:center;animation:nIn .6s ease-out forwards}
+      .ns{fill:#0EADB5;opacity:0;transform-box:fill-box;transform-origin:center;animation:nIn .6s ease-out forwards}
+      .na{fill:#F26430;opacity:0;transform-box:fill-box;transform-origin:center;animation:nIn .6s ease-out forwards}
+      .n1{animation-delay:.3s}.n2{animation-delay:.5s}.n3{animation-delay:.7s}
+      .n4{animation-delay:.9s}.n5{animation-delay:1.1s}.n7{animation-delay:1.5s}
+      .n8{animation-delay:1.7s}.n9{animation-delay:1.9s}.n10{animation-delay:2.1s}
+      .n11{animation-delay:2.3s}.n12{animation-delay:2.5s}.n13{animation-delay:2.7s}
+      @keyframes coreL{0%{r:0;opacity:0}8%{r:18;opacity:1}20%{r:21}32%{r:18}44%{r:21}56%{r:18}68%{r:20}80%{r:18}100%{r:18;opacity:1}}
+      @keyframes ringL{0%{r:0;opacity:0}8%{r:10;opacity:.6}20%{r:13;opacity:.3}32%{r:10;opacity:.6}44%{r:13;opacity:.3}56%{r:10;opacity:.6}68%{r:11;opacity:.5}80%{r:10;opacity:.6}100%{r:10;opacity:.6}}
+      .corN{fill:#0A7B83;opacity:0;animation:coreL 7s ease-in-out 1.3s forwards}
+      .corR{opacity:0;animation:ringL 7s ease-in-out 1.3s forwards}
+      @keyframes sI4{0%{opacity:0;transform:scale(0)}100%{opacity:.4;transform:scale(1)}}
+      @keyframes sI3{0%{opacity:0;transform:scale(0)}100%{opacity:.3;transform:scale(1)}}
+      .s4{opacity:0;transform-box:fill-box;transform-origin:center;animation:sI4 .6s ease-out forwards}
+      .s3{opacity:0;transform-box:fill-box;transform-origin:center;animation:sI3 .6s ease-out forwards}
+      .d1{animation-delay:2s}.d2{animation-delay:2.2s}.d3{animation-delay:2.4s}
+      .d4{animation-delay:2.6s}.d5{animation-delay:2.8s}.d6{animation-delay:3s}
+      @keyframes pkG{0%{offset-distance:0%;opacity:0}5%{opacity:1}95%{opacity:1}100%{offset-distance:100%;opacity:0}}
+      @keyframes pkF{0%,75%{opacity:1}100%{opacity:0}}
+      .pk{fill:#F26430;offset-rotate:0deg;opacity:0}
+      .pa{animation:pkG 2.5s linear 1.8s 2}
+      .pb{animation:pkG 3s linear 2.2s 2}
+      .pc{animation:pkG 2.8s linear 2.5s 2}
+      .pd{animation:pkG 3.2s linear 1.9s 2}
+      .pe{animation:pkG 2.2s linear 2.8s 2}
+      .pw{animation:pkF 8s ease-out forwards}
+
+      /* R2Я wordmark overlay — sits on top of the animated mesh */
+      @keyframes wmIn{0%{opacity:0;transform:scale(0.85)}100%{opacity:1;transform:scale(1)}}
+      .wm{
+        font: 800 130px/1 -apple-system, "Segoe UI", system-ui, sans-serif;
+        letter-spacing:-10px; fill:#fff;
+        transform-box:fill-box; transform-origin:center;
+        animation: wmIn 1.2s ease-out .2s both;
+      }
+      .wm .accent{fill:#0EADB5}
+    ]]></style>
+    <filter id="wm-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+      <feOffset dx="0" dy="3" result="off"/>
+      <feFlood flood-color="#000" flood-opacity="0.55"/>
+      <feComposite in2="off" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g transform="translate(300, 170) rotate(90)">
+    <line class="cn l1"  x1="-60" y1="-150" x2="20"  y2="-110"/>
+    <line class="cn l2"  x1="20"  y1="-110" x2="80"  y2="-145"/>
+    <line class="cn l3"  x1="-60" y1="-150" x2="-30" y2="-90"/>
+    <line class="cn l4"  x1="20"  y1="-110" x2="-30" y2="-90"/>
+    <line class="cn l5"  x1="-30" y1="-90"  x2="-80" y2="-30"/>
+    <line class="ca l6"  x1="80"  y1="-145" x2="40"  y2="-40"/>
+    <line class="cn l7"  x1="-30" y1="-90"  x2="40"  y2="-40"/>
+    <line class="cn l8"  x1="-80" y1="-30"  x2="0"   y2="0"/>
+    <line class="cn l9"  x1="40"  y1="-40"  x2="0"   y2="0"/>
+    <line class="ca l10" x1="-80" y1="-30"  x2="-40" y2="40"/>
+    <line class="cn l11" x1="0"   y1="0"    x2="80"  y2="30"/>
+    <line class="cn l12" x1="0"   y1="0"    x2="-40" y2="40"/>
+    <line class="cn l13" x1="80"  y1="30"   x2="30"  y2="90"/>
+    <line class="ca l14" x1="-40" y1="40"   x2="-20" y2="110"/>
+    <line class="cn l15" x1="80"  y1="30"   x2="60"  y2="150"/>
+    <line class="cn l16" x1="30"  y1="90"   x2="-20" y2="110"/>
+    <line class="cn l17" x1="-20" y1="110"  x2="60"  y2="150"/>
+    <line class="cn l18" x1="30"  y1="90"   x2="60"  y2="150"/>
+    <line class="cn l19" x1="-20" y1="110"  x2="-80" y2="145"/>
+
+    <g class="pw">
+      <circle class="pk pa" r="3"   style="offset-path:path('M-60,-150 L20,-110 L-30,-90 L0,0')"/>
+      <circle class="pk pb" r="3"   style="offset-path:path('M80,-145 L40,-40 L0,0 L80,30 L60,150')"/>
+      <circle class="pk pc" r="3"   style="offset-path:path('M0,0 L-40,40 L-20,110 L-80,145')"/>
+      <circle class="pk pd" r="2.5" style="offset-path:path('M-80,-30 L0,0 L80,30 L30,90')"/>
+      <circle class="pk pe" r="2.5" style="offset-path:path('M-60,-150 L-30,-90 L-80,-30 L-40,40 L-20,110')"/>
+    </g>
+
+    <circle class="np n1"  cx="-60" cy="-150" r="14"/>
+    <circle class="ns n2"  cx="20"  cy="-110" r="10"/>
+    <circle class="np n3"  cx="80"  cy="-145" r="11"/>
+    <circle class="ns n4"  cx="-30" cy="-90"  r="8"/>
+    <circle class="na n5"  cx="40"  cy="-40"  r="9"/>
+    <circle class="corN"   cx="0"   cy="0"    r="18"/>
+    <circle class="corR"   cx="0"   cy="0"    r="10" fill="none" stroke="#fff" stroke-width="2"/>
+    <circle class="ns n7"  cx="-80" cy="-30"  r="10"/>
+    <circle class="ns n8"  cx="80"  cy="30"   r="10"/>
+    <circle class="na n9"  cx="-40" cy="40"   r="9"/>
+    <circle class="ns n10" cx="30"  cy="90"   r="8"/>
+    <circle class="np n11" cx="-20" cy="110"  r="10"/>
+    <circle class="np n12" cx="60"  cy="150"  r="14"/>
+    <circle class="ns n13" cx="-80" cy="145"  r="11"/>
+
+    <circle class="s4 d1" cx="-95"  cy="-160" r="3" fill="#0EADB5"/>
+    <circle class="s4 d2" cx="105"  cy="-155" r="3" fill="#0EADB5"/>
+    <circle class="s4 d3" cx="-105" cy="155"  r="3" fill="#F26430"/>
+    <circle class="s4 d4" cx="85"   cy="165"  r="3" fill="#0EADB5"/>
+    <circle class="s3 d5" cx="110"  cy="10"   r="4" fill="#0A7B83"/>
+    <circle class="s3 d6" cx="-110" cy="-10"  r="4" fill="#0A7B83"/>
+  </g>
+
+  <!-- R2Я wordmark, centered on top of the mesh -->
+  <text class="wm" x="298" y="215" text-anchor="middle" filter="url(#wm-shadow)">R<tspan class="accent">2</tspan>Я</text>
+</svg>
+  </a>
+
+    <nav class="site-nav" aria-label="Site sections">
+          <a href="/"
+         class="site-nav-item"
+         >Home</a>
+          <a href="/redeem.php"
+         class="site-nav-item"
+         >Redeem</a>
+          <a href="/downloads.php"
+         class="site-nav-item"
+         >Downloads</a>
+          <a href="/run-a-relay.php"
+         class="site-nav-item active"
+         >Your Relay</a>
+          <a href="/network.php"
+         class="site-nav-item"
+         >Network</a>
+          <a href="{{BASE}}/paper"
+         class="site-nav-item"
+         >Paper</a>
+          <a href="/privacy.php"
+         class="site-nav-item"
+         >Privacy</a>
+          <a href="/homes.php"
+         class="site-nav-item"
+         >Homes</a>
+          <a href="/faq.php"
+         class="site-nav-item"
+         >FAQ</a>
+          <a href="{{BASE}}/status"
+         class="site-nav-item"
+         >Status</a>
+  
+      </nav>
+
+  <nav class="topbar-actions">
+    <form class="lang-form" method="get" action="">
+      <label class="visually-hidden" for="sippis-lang">Language</label>
+      <select id="sippis-lang" name="lang" class="lang-select" onchange="this.form.submit()">
+                  <option value="ar">العربية</option>
+                  <option value="bg">Български</option>
+                  <option value="bn">বাংলা</option>
+                  <option value="cs">Čeština</option>
+                  <option value="da">Dansk</option>
+                  <option value="de">Deutsch</option>
+                  <option value="el">Ελληνικά</option>
+                  <option value="en" selected>English</option>
+                  <option value="es">Español</option>
+                  <option value="fa">فارسی</option>
+                  <option value="fi">Suomi</option>
+                  <option value="fil">Filipino</option>
+                  <option value="fr">Français</option>
+                  <option value="he">עברית</option>
+                  <option value="hi">हिन्दी</option>
+                  <option value="hr">Hrvatski</option>
+                  <option value="hu">Magyar</option>
+                  <option value="id">Indonesia</option>
+                  <option value="it">Italiano</option>
+                  <option value="ja">日本語</option>
+                  <option value="ko">한국어</option>
+                  <option value="ms">Melayu</option>
+                  <option value="nl">Nederlands</option>
+                  <option value="no">Norsk</option>
+                  <option value="pl">Polski</option>
+                  <option value="pt">Português</option>
+                  <option value="ro">Română</option>
+                  <option value="ru">Русский</option>
+                  <option value="sk">Slovenčina</option>
+                  <option value="sv">Svenska</option>
+                  <option value="sw">Kiswahili</option>
+                  <option value="th">ไทย</option>
+                  <option value="tr">Türkçe</option>
+                  <option value="uk">Українська</option>
+                  <option value="ur">اردو</option>
+                  <option value="vi">Tiếng Việt</option>
+                  <option value="zh">中文</option>
+              </select>
+      <noscript><button type="submit" class="lang-apply">&#x2713;</button></noscript>
+    </form>
+
+                <div class="topbar-intent-pills">
+        <a class="intent-pill active" href="/redeem.php">Redeem an invite</a>
+        <a class="intent-pill" href="/run-a-relay.php">Run a relay</a>
+      </div>
+      </nav>
+</header>
+
+
+<div class="layout">
+
+<nav class="toc" aria-label="Table of contents">
+  <h2>On this page</h2>
+  <ol>
+    <li><a href="#install">Run your own relay</a></li>
+    <li><a href="#requirements">Requirements &amp; ports</a></li>
+    <li><a href="#verify">Check that it works</a></li>
+    <li><a href="#invites">Your invite codes</a></li>
+    <li><a href="#admin">Administering your relay</a></li>
+    <li><a href="#tls">TLS certificates</a></li>
+    <li><a href="#calls">Calls — STUN and TURN</a></li>
+    <li><a href="#remove">Removing your relay</a></li>
+  </ol>
+</nav>
+
+<article>
+
+<h1>Run your own <span class="accent">R2R</span> relay</h1>
+<p class="lede">
+  Every R2R relay is the same single binary, with SQLite and OpenSSL compiled in. There is nothing to install first: no PHP, no Python, no Node, no database server, no web server. It runs on any Linux, x86-64 or ARM64 (a Raspberry Pi 4 or 5 is enough). Open ports <b>8787</b> and <b>8788</b>, run one command as root, and your server is part of the network.</p>
+<p><b>Where to run it:</b> on the server itself. Rent a VPS (or use any always-on Linux box), log in to it over SSH as root or as any user with <code>sudo</code>, and paste the commands there. Nothing runs on your own computer.</p>
+
+<div class="callout imp">
+  <b>A relay is also the way in when nobody can invite you.</b> On first start it mints five invite codes of its own: claim one in the wallet, give the others to friends, and mint more whenever you like. From then on you are the one handing out invites, and each person you bring in gets three codes to pass on. <a href="#invites">Your invite codes</a> below says where to find them.</div>
+
+<h2 id="install"><a class="anchor" href="#install">Install — one command, on the server</a></h2>
+
+<div class="code hero-code">
+  <button class="copy" data-copy-target>Copy</button>
+<pre>curl -sSLO {{SCHEME}}://{{HOST}}/assets/r2r-relay-$(uname -m) &amp;&amp; \
+curl -sSLO {{SCHEME}}://{{HOST}}/assets/install.sh &amp;&amp; \
+curl -sSLO {{SCHEME}}://{{HOST}}/assets/setup-tls.sh &amp;&amp; \
+curl -sSLO {{SCHEME}}://{{HOST}}/assets/r2r-relay.service &amp;&amp; \
+chmod +x r2r-relay-* install.sh setup-tls.sh &amp;&amp; \
+sudo ./install.sh <span class="tok">YOUR.SERVER.IP</span>:8787</pre>
+</div>
+
+<div class="callout warn">
+  <b>Replace <span class="tok">YOUR.SERVER.IP</span> with the public IP of the server you are typing this on</b> &mdash; the one the relay will run on, not your laptop's. It is the address other relays will dial (<code>curl -4 ifconfig.me</code> on the server prints it). Leaving the placeholder unreplaced is the single most common install mistake.</div>
+
+<h3>Verify the download first</h3>
+<p><code>{{SCHEME}}://{{HOST}}/assets/</code> publishes the SHA-256 of every file it serves:</p>
+<div class="code">
+  <button class="copy" data-copy-target>Copy</button>
+<pre>curl -s {{SCHEME}}://{{HOST}}/assets/ | grep -A2 "\"r2r-relay-$(uname -m)\""
+sha256sum r2r-relay-*</pre>
+</div>
+
+<h3>What the installer does</h3>
+<p>It creates the <code>r2r</code> service user, installs the binary to <code>/usr/local/bin/r2r-relay</code>, lays out <code>/etc/r2r</code> and <code>/var/lib/r2r</code>, issues a self-signed TLS certificate, and enables a sandboxed systemd unit (<code>ProtectSystem=strict</code>, no capabilities, write access to <code>/var/lib/r2r</code> only). If something else is already listening on port 8787, the installer stops it and prints what it was, but does not touch its data.</p>
+
+<h2 id="requirements"><a class="anchor" href="#requirements">Requirements &amp; ports</a></h2>
+
+<p>Any Linux server on x86-64 or ARM64 &mdash; a cheap VPS, a Raspberry Pi 4 or 5, an Apple-silicon VM, an Ampere or Graviton instance &mdash; with root access and two open inbound ports. The binary is fully static, so no particular distribution or version is required; 32-bit ARM and RISC-V builds are published too. The relay is a single binary with an embedded SQLite database.</p>
+
+<table class="compact">
+  <thead><tr>
+    <th>Port</th>
+    <th>Protocol</th>
+    <th>Who needs to reach it</th>
+  </tr></thead>
+  <tbody>
+    <tr><td><code>8787</code></td><td><code>ws://</code> + HTTP</td><td>other relays, and clients on trusted networks</td></tr>
+    <tr><td><code>8788</code></td><td><code>wss://</code> (TLS)</td><td>remote clients connecting directly</td></tr>
+  </tbody>
+</table>
+
+<p>Both must be open inbound. Nothing else is required &mdash; no nginx, no reverse proxy, no database server.</p>
+
+<div class="callout info">
+  <b>A domain name is optional.</b> Relays authenticate each other with ed25519 signatures, not certificates, so a bare IP with the self-signed certificate is a fully functioning node. A domain plus a real certificate is only needed if browsers will connect <em>directly</em> to this relay &mdash; see <a href="#tls">TLS certificates</a>.</div>
+
+<h2 id="verify"><a class="anchor" href="#verify">Check that it works</a></h2>
+
+<div class="code"><button class="copy" data-copy-target>Copy</button><pre>systemctl status r2r-relay</pre></div>
+<p>Good output: <code>active (running)</code>.</p>
+
+<div class="code"><button class="copy" data-copy-target>Copy</button><pre>curl -s http://127.0.0.1:8787/status.json</pre></div>
+<p>Good output: JSON with uptime, peers, and payload counts.</p>
+
+<div class="code"><button class="copy" data-copy-target>Copy</button><pre>r2r-probe --url ws://127.0.0.1:8787 ping</pre></div>
+<p>Good output: <code>pong</code> and a millisecond RTT.</p>
+
+<p>Within a minute or two the node discovers other relays via gossip:</p>
+<div class="code"><button class="copy" data-copy-target>Copy</button><pre>curl -s http://127.0.0.1:8787/peers.json | grep -c '"verified": true'</pre></div>
+<p>Good output: any number &ge; 1.</p>
+
+<p>The relay also serves a human-readable status page at <code>http://<span class="tok">YOUR.SERVER.IP</span>:8787/</code> &mdash; active nodes, uptime, payloads held, frames relayed &mdash; so you can point a browser at your own node.</p>
+
+<h2 id="invites"><a class="anchor" href="#invites">Your invite codes</a></h2>
+
+<p>Registration on a relay is closed by default and works by invite code. On first start the relay mints <b>five genesis codes</b> into <code>/var/lib/r2r/genesis-invites.txt</code> (mode <code>0600</code>, deliberately never written to the log). Each code (<code>R2R-XXXX-XXXX-XXXX</code>, with your IP folded in when you advertise one) works once. Claiming one registers an identity and gives that person three codes of their own, which unlock once they have actually used the network: received a few messages and chatted with whoever invited them. An identity registers only once per relay, so the network grows person-to-person, and every branch stays revocable.</p>
+
+<div class="code"><button class="copy" data-copy-target>Copy</button><pre>sudo cat /var/lib/r2r/genesis-invites.txt
+r2r-relay --mint-invites 10        # mint more at any time</pre></div>
+
+<div class="callout info">
+  <b>A used invite code stores no personal data.</b> Only the code, timestamps and the pseudonymous fingerprints of who issued and who claimed it &mdash; no name, no email, no phone number. An operator who wants a fully open relay can set <code>--open-registration</code> (or the equivalent in <code>/etc/r2r/relay.env</code>); identities are still recorded and newcomers still receive three (locked) codes, so clients behave identically either way.</div>
+
+<h2 id="admin"><a class="anchor" href="#admin">Administering your relay</a></h2>
+
+<p>Day-to-day administration happens <b>from your own wallet, not over SSH</b> &mdash; the server-side CLI exists for setup and for operators who prefer the shell.</p>
+
+<h3>a) From your wallet &mdash; the owner panel</h3>
+
+<p>There is no admin key or password. The wallet already proves an ed25519 identity on every connection, so the relay simply keeps a list of identities allowed to administer it. Once, on the server:</p>
+
+<div class="code"><button class="copy" data-copy-target>Copy</button><pre>sudo r2r-relay --owner-add <span class="tok">R2R_YOUR_ADDRESS</span>
+sudo r2r-relay --list-owners
+sudo r2r-relay --owner-remove <span class="tok">YOUR-64-CHARACTER-FINGERPRINT</span>   # revoke</pre></div>
+
+<p>Paste the <code>R2R_&hellip;</code> address the wallet shows in Settings &mdash; the same identity you already message with (the 64-character fingerprint works too). From the next connection the owner panel appears automatically in the wallet, and from it you can <b>list accounts</b> (usage, quota, pending messages, online state), <b>change any account's storage allowance</b>, and <b>mint invite codes from your phone</b> instead of reading a file over SSH.</p>
+
+<div class="callout important">
+  <b>There is no shared secret at all.</b> Nothing to paste, nothing to leak, and revoking access is one command.</div>
+
+<h3>b) From the shell</h3>
+
+<p>Safe to run while the relay is live &mdash; the database is in WAL mode; no restart needed:</p>
+
+<div class="code"><button class="copy" data-copy-target>Copy</button><pre>r2r-relay --set-quota <span class="tok">FINGERPRINT</span> 250    # give this user 250 MB
+r2r-relay --list-quotas                  # every individual allowance
+r2r-relay --clear-quota <span class="tok">FINGERPRINT</span>     # back to the relay default
+r2r-relay --mint-invites 10</pre></div>
+
+<p>Every identity gets 1 MB by default; the allowance covers messages, voice/video recordings and encrypted history together. Going over it refuses <em>new</em> payloads &mdash; nothing already stored is ever deleted by a quota change, so lowering one is safe.</p>
+
+<h3>c) Settings reference</h3>
+
+<p>Full list from <code>r2r-relay --help</code>. Every flag has an <code>R2R_*</code> environment equivalent, set in <code>/etc/r2r/relay.env</code>:</p>
+
+<table class="compact">
+  <thead><tr>
+    <th>Variable</th>
+    <th>Meaning</th>
+  </tr></thead>
+  <tbody>
+    <tr><td><code>R2R_ADVERTISE</code></td><td><code>host:port</code> other relays dial. <b>Without it, nobody can route to you.</b></td></tr>
+    <tr><td><code>R2R_SEEDS</code></td><td>Extra relays to bootstrap from, <code>host:port,host:port</code> &mdash; added to the seed compiled into the binary.</td></tr>
+    <tr><td><code>DEFAULT_QUOTA_MB</code></td><td>Storage each identity gets (default 1).</td></tr>
+    <tr><td><code>QUEUE_TTL_DAYS</code> / <code>BLOB_TTL_DAYS</code></td><td>Retention; the longer of the two wins (default 7 days).</td></tr>
+    <tr><td><code>TURN_URL</code> / <code>TURN_USER</code> / <code>TURN_PASS</code></td><td>Needed for calls to connect through strict NATs.</td></tr>
+    <tr><td><code>R2R_ASSETS_DIR</code></td><td>Publish a directory at <code>/assets/</code> &mdash; turns the relay into a verified download mirror.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="tls"><a class="anchor" href="#tls">TLS certificates</a></h2>
+
+<ol>
+  <li>
+    <b>The self-signed certificate from the installer is genuinely enough for the relay network.</b> Relays never check each other's certificate chains &mdash; they authenticate with an ed25519 signature pinned per address, which binds the <em>node</em> rather than a hostname and is stronger than a certificate for that job.  </li>
+  <li>
+    <b>A browser-trusted certificate is needed for exactly one thing:</b> a browser that opened the wallet over HTTPS connecting straight to this relay. If users open the wallet as a local file (<code>file://</code>), plain <code>ws://</code> to a bare IP works fine and this relay doesn't need a real cert. If you want one, point a DNS name at the node and run (port 80 must be reachable):    <div class="code"><button class="copy" data-copy-target>Copy</button><pre>./setup-tls.sh <span class="tok">relay1.example.org</span></pre></div>
+    Renewal never restarts the relay &mdash; the hook sends <code>SIGHUP</code>, the certificate is re-read in place, and no client connection or peer link drops.  </li>
+  <li>
+    <b>The private key is unreadable to your login shell on purpose.</b> <code>/etc/r2r/tls/key.pem</code> is <code>0640 root:r2r</code>.    <div class="callout warn">
+      <b>The fix is <em>not</em> to copy the key somewhere more permissive.</b> Start the relay through systemd, or point <code>--cert</code>/<code>--key</code> at a throwaway pair for hand-run tests.    </div>
+  </li>
+</ol>
+
+<h2 id="calls"><a class="anchor" href="#calls">Calls — STUN and TURN</a></h2>
+
+<p>Calls are peer-to-peer &mdash; audio and video flow directly between the two clients, end-to-end encrypted, and <b>never through a relay</b>. STUN and TURN only help the two ends find each other. STUN is free and usually enough; TURN is the fallback for symmetric NATs (common on mobile carriers and corporate networks), where the encrypted media must bounce off a server.</p>
+
+<div class="callout warn">
+  <b>Without a TURN server, calls work in testing and fail for a real share of users on mobile data.</b></div>
+
+<div class="code"><button class="copy" data-copy-target>Copy</button><pre>sudo apt install coturn
+# then set TURN_URL and TURN_SECRET_FILE in /etc/r2r/relay.env</pre></div>
+
+<p>The relay mints a fresh, expiring credential per client (HMAC of an expiry timestamp) rather than a fixed password, so a leaked credential is worthless within minutes.</p>
+
+<div class="callout info">
+  <b>Honest caveat.</b> TURN carries the media, so whoever runs it can see both endpoints' IPs and the call's timing and size &mdash; never its contents.</div>
+
+<h2 id="remove"><a class="anchor" href="#remove">Removing your relay</a></h2>
+
+<p>Being easy to leave is part of being trustworthy:</p>
+
+<div class="code"><button class="copy" data-copy-target>Copy</button><pre>sudo systemctl disable --now r2r-relay
+sudo rm /etc/systemd/system/r2r-relay.service /usr/local/bin/r2r-relay
+sudo rm -rf /var/lib/r2r /etc/r2r    # deletes stored messages and the node identity</pre></div>
+
+<div class="callout warn">
+  <b><code>/var/lib/r2r/node.key</code> is the relay's permanent identity.</b> Delete it and a reinstalled node returns as a stranger every peer must re-pin.</div>
+
+<p style="margin-top:32px; padding-top:20px; border-top:1px solid var(--pane-border);">
+  <b>Related reading:</b> <a href="/network.php">how the network works</a> &middot; <a href="/privacy.php">what a relay knows</a> &middot; <a href="/faq.php">FAQ</a></p>
+
+<div class="page-footer">
+  no personal data · no IP logs · payloads expire automatically</div>
+
+</article>
+</div>
+
+<script>
+// Copy buttons: each .copy inside a .code block copies its adjacent <pre>.
+document.querySelectorAll('.code .copy').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var pre = btn.parentElement.querySelector('pre');
+    if (!pre) return;
+    var text = pre.innerText || pre.textContent || '';
+    navigator.clipboard.writeText(text).then(function(){
+      var old = btn.textContent;
+      btn.textContent = 'Copied ✓'; btn.classList.add('ok');
+      setTimeout(function(){ btn.textContent = old; btn.classList.remove('ok'); }, 1600);
+    }).catch(function(){
+      btn.textContent = 'Copy failed';
+      setTimeout(function(){ btn.textContent = 'Copy'; }, 1600);
+    });
+  });
+});
+</script>
+</body>
+</html>

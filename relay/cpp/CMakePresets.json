@@ -1,0 +1,41 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "full",
+      "displayName": "r2r-relay-full (doorway + admin console)",
+      "binaryDir": "${sourceDir}/build-full",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "R2R_WITH_DOORWAY": "ON",
+        "R2R_WITH_ADMIN_UI": "ON"
+      }
+    },
+    {
+      "name": "adminOnly",
+      "displayName": "r2r-relay-adminOnly (admin console, no public doorway)",
+      "binaryDir": "${sourceDir}/build-adminonly",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "R2R_WITH_DOORWAY": "OFF",
+        "R2R_WITH_ADMIN_UI": "ON"
+      }
+    },
+    {
+      "name": "headless",
+      "displayName": "r2r-relay-headless (storage + routing + CLI admin)",
+      "binaryDir": "${sourceDir}/build-headless",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "R2R_WITH_DOORWAY": "OFF",
+        "R2R_WITH_ADMIN_UI": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "full", "configurePreset": "full", "jobs": 1 },
+    { "name": "adminOnly", "configurePreset": "adminOnly", "jobs": 1 },
+    { "name": "headless", "configurePreset": "headless", "jobs": 1 }
+  ]
+}

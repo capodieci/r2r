@@ -1,0 +1,1499 @@
+{
+  "addressing": {
+    "parse_address_cases": [
+      {
+        "canonical": "relay.example:8787",
+        "default_port": 8787,
+        "input": "Relay.Example",
+        "note": "host lowercased, default port",
+        "valid": true
+      },
+      {
+        "canonical": "relay.example:65535",
+        "default_port": 8787,
+        "input": "relay.example:65535",
+        "note": "maximum port",
+        "valid": true
+      },
+      {
+        "canonical": null,
+        "default_port": 8787,
+        "input": "relay.example:0",
+        "note": "port 0: invalid",
+        "valid": false
+      },
+      {
+        "canonical": "[::1]:8787",
+        "default_port": 8787,
+        "input": "[::1]",
+        "note": "bracketed IPv6 without port",
+        "valid": true
+      },
+      {
+        "canonical": "[::1]:8787",
+        "default_port": 8787,
+        "input": "::1",
+        "note": "bare IPv6",
+        "valid": true
+      },
+      {
+        "canonical": null,
+        "default_port": 8787,
+        "input": "wss://relay.example",
+        "note": "schemes are rejected by parse_address itself (parse_target strips them first)",
+        "valid": false
+      },
+      {
+        "canonical": null,
+        "default_port": 8787,
+        "input": "-relay.example",
+        "note": "host may not start with '-'",
+        "valid": false
+      },
+      {
+        "canonical": null,
+        "default_port": 8787,
+        "input": "relay..example",
+        "note": "'..' in host: invalid",
+        "valid": false
+      }
+    ],
+    "parse_target_cases": [
+      {
+        "fingerprint": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+        "input": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+        "note": "bare fingerprint",
+        "relay": "",
+        "valid": true
+      },
+      {
+        "fingerprint": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+        "input": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464@203.0.113.10:8787",
+        "note": "fp@host:port",
+        "relay": "203.0.113.10:8787",
+        "valid": true
+      },
+      {
+        "fingerprint": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+        "input": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464@203.0.113.10",
+        "note": "fp@host: default port 8787",
+        "relay": "203.0.113.10:8787",
+        "valid": true
+      },
+      {
+        "fingerprint": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+        "input": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464@ws://relay.example",
+        "note": "ws:// scheme: default port 8787",
+        "relay": "relay.example:8787",
+        "valid": true
+      },
+      {
+        "fingerprint": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+        "input": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464@wss://relay.example",
+        "note": "wss:// scheme: default port 8788",
+        "relay": "relay.example:8788",
+        "valid": true
+      },
+      {
+        "fingerprint": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+        "input": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464@WSS://Relay.Example:9000",
+        "note": "scheme and host are case-insensitive; host lowercased",
+        "relay": "relay.example:9000",
+        "valid": true
+      },
+      {
+        "fingerprint": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+        "input": "80EFF9BE9001E72B4D54D0D98C6CD475A8296948E63170C6A95533FC113B3464",
+        "note": "uppercase fingerprint is normalised to lowercase",
+        "relay": "",
+        "valid": true
+      },
+      {
+        "fingerprint": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+        "input": "  80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464  ",
+        "note": "surrounding whitespace is trimmed",
+        "relay": "",
+        "valid": true
+      },
+      {
+        "fingerprint": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+        "input": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464@[2001:db8::1]:8787",
+        "note": "bracketed IPv6 literal",
+        "relay": "[2001:db8::1]:8787",
+        "valid": true
+      },
+      {
+        "fingerprint": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+        "input": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464@2001:db8::1",
+        "note": "bare IPv6 literal gets the default port and brackets",
+        "relay": "[2001:db8::1]:8787",
+        "valid": true
+      },
+      {
+        "fingerprint": "",
+        "input": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+        "note": "not hex: invalid",
+        "relay": "",
+        "valid": false
+      },
+      {
+        "fingerprint": "",
+        "input": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464@",
+        "note": "empty relay after '@': invalid",
+        "relay": "",
+        "valid": false
+      },
+      {
+        "fingerprint": "",
+        "input": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464@wss://relay.example/",
+        "note": "trailing slash: invalid (parse_address rejects '/')",
+        "relay": "",
+        "valid": false
+      },
+      {
+        "fingerprint": "",
+        "input": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464@relay.example:8787/r2r",
+        "note": "path: invalid",
+        "relay": "",
+        "valid": false
+      },
+      {
+        "fingerprint": "",
+        "input": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464@relay.example:99999",
+        "note": "port out of range: invalid",
+        "relay": "",
+        "valid": false
+      },
+      {
+        "fingerprint": "",
+        "input": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "note": "total length > 400: invalid",
+        "relay": "",
+        "valid": false
+      },
+      {
+        "fingerprint": "",
+        "input": "80eff9be9001e72b4d54d0d98c6cd47",
+        "note": "31 hex chars: invalid",
+        "relay": "",
+        "valid": false
+      },
+      {
+        "fingerprint": "80eff9be9001e72b4d54d0d98c6cd475",
+        "input": "80eff9be9001e72b4d54d0d98c6cd475",
+        "note": "32 hex chars: valid (minimum)",
+        "relay": "",
+        "valid": true
+      },
+      {
+        "fingerprint": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b346480eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+        "input": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b346480eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+        "note": "128 hex chars: valid (maximum)",
+        "relay": "",
+        "valid": true
+      },
+      {
+        "fingerprint": "",
+        "input": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b346480eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464a",
+        "note": "129 hex chars: invalid",
+        "relay": "",
+        "valid": false
+      },
+      {
+        "fingerprint": "",
+        "input": "",
+        "note": "empty: invalid",
+        "relay": "",
+        "valid": false
+      }
+    ],
+    "rules": {
+      "length": "the whole target must be 1..400 bytes",
+      "parse_address": "rejects >300 bytes, bytes <= 0x20 or >= 0x7f and any of / \\ @ ? # , ; '[v6]:port', a bare string with 2+ ':' is IPv6 with the default port, else host[:port]; port 1..65535; host lowercased; output host:port or [v6]:port",
+      "relay": "trimmed; 'ws://' (default port 8787) or 'wss://' (default port 8788) prefix is stripped case-insensitively; the rest goes through parse_address",
+      "split": "at the first '@'; the left part is trimmed and lowercased and must be 32..128 hex chars",
+      "trailing_slash": "NOT stripped by parse_target: 'fp@wss://host/' is invalid (see cases)"
+    },
+    "verify": "parse_target(input) must give {valid, fingerprint, relay}; parse_address(input, 8787) must give {valid, canonical}."
+  },
+  "ed25519_verify": {
+    "cases": [
+      {
+        "expected": true,
+        "message": "The quick brown fox jumps over the lazy dog",
+        "note": "signed by identity_a",
+        "pubkey_hex": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+        "sig_b64": "YDuhh9fwcwcszmdJXn3PTXQQKnafnfjPte3tmFXyumJ7jlRFfnYYHQORlMZB9z210uud7KwAwJTU6Rlo4OyzBQ==",
+        "sig_hex": "603ba187d7f073072cce67495e7dcf4d74102a769f9df8cfb5eded9855f2ba627b8e54457e76181d039194c641f73db5d2eb9decac00c094d4e91968e0ecb305"
+      },
+      {
+        "expected": false,
+        "message": "The quick brown fox jumps over the lazy cog",
+        "note": "message tampered (dog -> cog)",
+        "pubkey_hex": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+        "sig_b64": "YDuhh9fwcwcszmdJXn3PTXQQKnafnfjPte3tmFXyumJ7jlRFfnYYHQORlMZB9z210uud7KwAwJTU6Rlo4OyzBQ==",
+        "sig_hex": "603ba187d7f073072cce67495e7dcf4d74102a769f9df8cfb5eded9855f2ba627b8e54457e76181d039194c641f73db5d2eb9decac00c094d4e91968e0ecb305"
+      },
+      {
+        "expected": false,
+        "message": "The quick brown fox jumps over the lazy dog",
+        "note": "wrong public key (identity_b)",
+        "pubkey_hex": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394",
+        "sig_b64": "YDuhh9fwcwcszmdJXn3PTXQQKnafnfjPte3tmFXyumJ7jlRFfnYYHQORlMZB9z210uud7KwAwJTU6Rlo4OyzBQ==",
+        "sig_hex": "603ba187d7f073072cce67495e7dcf4d74102a769f9df8cfb5eded9855f2ba627b8e54457e76181d039194c641f73db5d2eb9decac00c094d4e91968e0ecb305"
+      }
+    ],
+    "signature_encoding": "64 raw bytes (R || S), base64 on the wire",
+    "verify": "Ed25519_Verify(pubkey, message, sig) must give 'expected' for each case."
+  },
+  "encodings": {
+    "base64_alphabet": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
+    "base64_padding": "=",
+    "decode_base64": [
+      {
+        "accepted": true,
+        "hex": "fbff",
+        "input": "+/8=",
+        "note": "standard alphabet, padded"
+      },
+      {
+        "accepted": true,
+        "hex": "fbff",
+        "input": "-_8",
+        "note": "URL-safe alphabet, unpadded"
+      },
+      {
+        "accepted": true,
+        "hex": "fbff",
+        "input": "-_8=",
+        "note": "URL-safe alphabet, padded"
+      },
+      {
+        "accepted": true,
+        "hex": "666f6f",
+        "input": "Zm9v",
+        "note": "'foo'"
+      },
+      {
+        "accepted": true,
+        "hex": "666f6f626172",
+        "input": "Zm9v\nYmFy",
+        "note": "embedded newline is ignored"
+      },
+      {
+        "accepted": false,
+        "hex": null,
+        "input": "Zm9=",
+        "note": "non-zero leftover bits: rejected"
+      },
+      {
+        "accepted": false,
+        "hex": null,
+        "input": "Zm9v=Zg",
+        "note": "data after padding: rejected"
+      },
+      {
+        "accepted": false,
+        "hex": null,
+        "input": "Zm9v===",
+        "note": "more than two '=': rejected"
+      },
+      {
+        "accepted": true,
+        "hex": "66",
+        "input": "Zg",
+        "note": "'f' without padding: accepted"
+      },
+      {
+        "accepted": false,
+        "hex": null,
+        "input": "Z",
+        "note": "6 leftover bits: rejected"
+      },
+      {
+        "accepted": false,
+        "hex": null,
+        "input": "Zm*v",
+        "note": "character outside both alphabets: rejected"
+      }
+    ],
+    "decode_hex": [
+      {
+        "accepted": true,
+        "hex": "fbff",
+        "input": "FBFF",
+        "note": "uppercase input, lowercase output"
+      },
+      {
+        "accepted": true,
+        "hex": "fbff",
+        "input": "fbff",
+        "note": "lowercase"
+      },
+      {
+        "accepted": false,
+        "hex": null,
+        "input": "fbf",
+        "note": "odd length: rejected"
+      },
+      {
+        "accepted": false,
+        "hex": null,
+        "input": "zz",
+        "note": "non-hex: rejected"
+      },
+      {
+        "accepted": true,
+        "hex": "",
+        "input": "",
+        "note": "empty: accepted as zero bytes"
+      }
+    ],
+    "encode": [
+      {
+        "base64": "",
+        "hex": "",
+        "len": 0,
+        "note": "empty"
+      },
+      {
+        "base64": "Zg==",
+        "hex": "66",
+        "len": 1,
+        "note": "RFC 4648 'f'"
+      },
+      {
+        "base64": "Zm8=",
+        "hex": "666f",
+        "len": 2,
+        "note": "RFC 4648 'fo'"
+      },
+      {
+        "base64": "Zm9v",
+        "hex": "666f6f",
+        "len": 3,
+        "note": "RFC 4648 'foo'"
+      },
+      {
+        "base64": "Zm9vYg==",
+        "hex": "666f6f62",
+        "len": 4,
+        "note": "RFC 4648 'foob'"
+      },
+      {
+        "base64": "Zm9vYmE=",
+        "hex": "666f6f6261",
+        "len": 5,
+        "note": "RFC 4648 'fooba'"
+      },
+      {
+        "base64": "Zm9vYmFy",
+        "hex": "666f6f626172",
+        "len": 6,
+        "note": "RFC 4648 'foobar'"
+      },
+      {
+        "base64": "AAECAwQFBgcICQoLDA0ODw==",
+        "hex": "000102030405060708090a0b0c0d0e0f",
+        "len": 16,
+        "note": "bytes 0x00..0x0f"
+      },
+      {
+        "base64": "+/8=",
+        "hex": "fbff",
+        "len": 2,
+        "note": "exercises '+' and '/'"
+      },
+      {
+        "base64": "//79",
+        "hex": "fffefd",
+        "len": 3,
+        "note": "exercises '/'"
+      },
+      {
+        "base64": "/w==",
+        "hex": "ff",
+        "len": 1,
+        "note": "single 0xff"
+      }
+    ],
+    "hex_is_lowercase": true,
+    "verify": "base64_encode(bytes) == base64 and hex_encode(bytes) == hex for every case; decode each 'decode_base64'/'decode_hex' input and compare 'accepted' and 'hex'."
+  },
+  "hmac_and_turn": {
+    "hmac_cases": [
+      {
+        "hmac_sha1_hex": "de7c9b85b8b78aa6bc8a7a36f70a90701c9db4d9",
+        "hmac_sha256_hex": "f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8",
+        "key": "key",
+        "message": "The quick brown fox jumps over the lazy dog",
+        "note": "well-known RFC 2104 style check"
+      },
+      {
+        "hmac_sha1_hex": "fbdb1d1b18aa6c08324b7d64b71fb76370690e1d",
+        "hmac_sha256_hex": "b613679a0814d9ec772f95d778c35fc5ff1697c493715653c6c712144292c5ad",
+        "key": "",
+        "message": "",
+        "note": "empty key and message"
+      },
+      {
+        "hmac_sha1_hex": "11f52c504054b8e2d503c6840bb7c0d38d22c7c8",
+        "hmac_sha256_hex": "29402e670deef71638c3d6245ffd0bbee89baad483aa6a1638aca5380f744309",
+        "key": "s3cret",
+        "message": "1754331600",
+        "note": "TURN secret over a bare expiry"
+      }
+    ],
+    "turn_rest_credentials": {
+      "cases": [
+        {
+          "credential": "n6Ev6DcmiWtZAsoB2mRENLubSuU=",
+          "credential_hmac_sha1_hex": "9fa12fe83726896b5902ca01da644434bb9b4ae5",
+          "day": 20304,
+          "expiry": 1754331600,
+          "handle": "46ea36526cd6",
+          "handle_hmac_sha256_hex": "46ea36526cd6f472ec26cc5637fbb246e75cc82a8f8cffc25193a0862a34d9bd",
+          "handle_material": "turn-handle|20304|06f080fd2509682e820cbdfd3b10fe45c39d6e16e89fb3e1c31ac71ae65f3b61",
+          "inputs": {
+            "identity": "06f080fd2509682e820cbdfd3b10fe45c39d6e16e89fb3e1c31ac71ae65f3b61",
+            "now": 1754331000,
+            "secret": "s3cret",
+            "ttl_seconds": 600
+          },
+          "username": "1754331600:46ea36526cd6",
+          "whitepaper_ref": "Appendix A.7"
+        },
+        {
+          "credential": "5K0HIiBjulTVztJ2VlXJqu9yARo=",
+          "credential_hmac_sha1_hex": "e4ad07222063ba54d5ced2765655c9aaef72011a",
+          "day": 20304,
+          "expiry": 1754331600,
+          "handle": "a9cea5df54d6",
+          "handle_hmac_sha256_hex": "a9cea5df54d6d17323892a0429d1d9fea2e0733cbc1e8f92369d36f754cddf0d",
+          "handle_material": "turn-handle|20304|80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+          "inputs": {
+            "identity": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+            "now": 1754331000,
+            "secret": "s3cret",
+            "ttl_seconds": 600
+          },
+          "username": "1754331600:a9cea5df54d6"
+        },
+        {
+          "credential": "EfUsUEBUuOLVA8aEC7fA040ix8g=",
+          "credential_hmac_sha1_hex": "11f52c504054b8e2d503c6840bb7c0d38d22c7c8",
+          "expiry": 1754331600,
+          "inputs": {
+            "identity": "",
+            "now": 1754331000,
+            "secret": "s3cret",
+            "ttl_seconds": 600
+          },
+          "note": "anonymous session: no identity, so no ':handle' suffix",
+          "username": "1754331600"
+        }
+      ],
+      "construction": "expiry = now + ttl; handle = hex(HMAC-SHA256(secret, \"turn-handle|\" + decimal(now / 86400) + \"|\" + identity))[0..12]; username = decimal(expiry) + \":\" + handle (no handle part when identity is empty); credential = base64(HMAC-SHA1(secret, username))",
+      "note": "the day counter uses integer division of Unix seconds by 86400; the handle is the first 12 lowercase hex characters (6 bytes) of the full 32-byte HMAC-SHA256"
+    },
+    "verify": "HMAC per RFC 2104 over the UTF-8 bytes of key and message; TURN: username = decimal(now + ttl) [':' + first 12 hex chars of HMAC-SHA256(secret, 'turn-handle|' + decimal(now div 86400) + '|' + identity)], credential = base64(HMAC-SHA1(secret, username))."
+  },
+  "identity": {
+    "address_base32_alphabet": "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567",
+    "address_checksum_construction": "SHA3-256(ed25519_pub || \"R2R\")[0..3] (FIPS 202 SHA3-256, not Keccak)",
+    "address_construction": "raw = pub(32) || checksum(3) = 35 bytes = 280 bits = exactly 56 base32 characters, MSB first, no padding; output 'R2R' + ('_' + 8 chars) x 7",
+    "address_decoder": "drop '_', '-' and ' '; uppercase; strip a leading 'R2R'; require exactly 56 alphabet chars; decode; require SHA3-256(pub || 'R2R')[0..3] == bytes 32..34",
+    "fingerprint_construction": "lowercase_hex(SHA-256(\"r2r-id-v1\" || ed25519_pub)), 64 hex chars",
+    "fingerprint_tag": "r2r-id-v1",
+    "identities": [
+      {
+        "address_checksum_hex": "dc4d15",
+        "address_decode_cases": [
+          {
+            "accepted": true,
+            "input": "R2R_RKEOHXLU_BHYZL7KS_3MWTZOS5_OLFGOCN7_DWKBEG7T_OSEADNAP_N5ONYTIV",
+            "note": "exact",
+            "pubkey_hex": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+          },
+          {
+            "accepted": true,
+            "input": "r2r_rkeohxlu_bhyzl7ks_3mwtzos5_olfgocn7_dwkbeg7t_oseadnap_n5onytiv",
+            "note": "lowercase",
+            "pubkey_hex": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+          },
+          {
+            "accepted": true,
+            "input": "R2R-RKEOHXLU-BHYZL7KS-3MWTZOS5-OLFGOCN7-DWKBEG7T-OSEADNAP-N5ONYTIV",
+            "note": "'-' separators",
+            "pubkey_hex": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+          },
+          {
+            "accepted": true,
+            "input": "R2R RKEOHXLU BHYZL7KS 3MWTZOS5 OLFGOCN7 DWKBEG7T OSEADNAP N5ONYTIV",
+            "note": "space separators",
+            "pubkey_hex": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+          },
+          {
+            "accepted": true,
+            "input": "RKEOHXLUBHYZL7KS3MWTZOS5OLFGOCN7DWKBEG7TOSEADNAPN5ONYTIV",
+            "note": "no prefix, no separators",
+            "pubkey_hex": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+          },
+          {
+            "accepted": true,
+            "input": "r2r-rkeohxlu-bhyzl7ks-3mwtzos5-olfgocn7-dwkbeg7t-oseadnap-n5onytiv",
+            "note": "lowercase with 'r2r-' prefix",
+            "pubkey_hex": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+          },
+          {
+            "accepted": false,
+            "input": "R2R_RKEOHXLU_BHYZL7KS_3MWTZOS5_OLFGOCN7_DWKBEG7T_OSEADNAP_N5ONYTIA",
+            "note": "last character changed: checksum mismatch, rejected",
+            "pubkey_hex": null
+          },
+          {
+            "accepted": false,
+            "input": "R2R_AKEOHXLU_BHYZL7KS_3MWTZOS5_OLFGOCN7_DWKBEG7T_OSEADNAP_N5ONYTIV",
+            "note": "first key character changed: checksum mismatch, rejected",
+            "pubkey_hex": null
+          },
+          {
+            "accepted": false,
+            "input": "R2R_RKEOHXLU_BHYZL7KS_3MWTZOS5_OLFGOCN7_DWKBEG7T_OSEADNAP_N5ONYTI",
+            "note": "one character short: wrong length, rejected",
+            "pubkey_hex": null
+          },
+          {
+            "accepted": false,
+            "input": "R2R_R1EOHXLU_BHYZL7KS_3MWTZOS5_OLFGOCN7_DWKBEG7T_OSEADNAP_N5ONYTIV",
+            "note": "'1' is outside the alphabet: rejected",
+            "pubkey_hex": null
+          },
+          {
+            "accepted": false,
+            "input": "R2R_RKEOHXLU_BHYZL7KS_3MWTZOS5_OLFGOCN7_DWKBEG7T_OSEADNAP_N5ONYTIV_ABCDEFGH",
+            "note": "extra group: wrong length, rejected",
+            "pubkey_hex": null
+          }
+        ],
+        "address_raw_hex": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5cdc4d15",
+        "contact_address": "R2R_RKEOHXLU_BHYZL7KS_3MWTZOS5_OLFGOCN7_DWKBEG7T_OSEADNAP_N5ONYTIV",
+        "ed25519_pub_b64": "iojj3XQJ8ZX9UtstPLpdcspnCb8dlBIb83SIAbQPb1w=",
+        "ed25519_pub_hex": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+        "fingerprint": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+        "fingerprint_preimage_hex": "7232722d69642d76318a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+        "label": "identity_a",
+        "seed_hex": "0101010101010101010101010101010101010101010101010101010101010101"
+      },
+      {
+        "address_checksum_hex": "f1af9e",
+        "address_decode_cases": [
+          {
+            "accepted": true,
+            "input": "R2R_QE4XODVI_PULV6VVD_KRTMGTD6_ZTFY3CUR_WTXDPIS5_6YHVXD6J_WOKPDL46",
+            "note": "exact",
+            "pubkey_hex": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+          },
+          {
+            "accepted": true,
+            "input": "r2r_qe4xodvi_pulv6vvd_krtmgtd6_ztfy3cur_wtxdpis5_6yhvxd6j_wokpdl46",
+            "note": "lowercase",
+            "pubkey_hex": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+          },
+          {
+            "accepted": true,
+            "input": "R2R-QE4XODVI-PULV6VVD-KRTMGTD6-ZTFY3CUR-WTXDPIS5-6YHVXD6J-WOKPDL46",
+            "note": "'-' separators",
+            "pubkey_hex": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+          },
+          {
+            "accepted": true,
+            "input": "R2R QE4XODVI PULV6VVD KRTMGTD6 ZTFY3CUR WTXDPIS5 6YHVXD6J WOKPDL46",
+            "note": "space separators",
+            "pubkey_hex": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+          },
+          {
+            "accepted": true,
+            "input": "QE4XODVIPULV6VVDKRTMGTD6ZTFY3CURWTXDPIS56YHVXD6JWOKPDL46",
+            "note": "no prefix, no separators",
+            "pubkey_hex": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+          },
+          {
+            "accepted": true,
+            "input": "r2r-qe4xodvi-pulv6vvd-krtmgtd6-ztfy3cur-wtxdpis5-6yhvxd6j-wokpdl46",
+            "note": "lowercase with 'r2r-' prefix",
+            "pubkey_hex": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+          },
+          {
+            "accepted": false,
+            "input": "R2R_QE4XODVI_PULV6VVD_KRTMGTD6_ZTFY3CUR_WTXDPIS5_6YHVXD6J_WOKPDL4A",
+            "note": "last character changed: checksum mismatch, rejected",
+            "pubkey_hex": null
+          },
+          {
+            "accepted": false,
+            "input": "R2R_AE4XODVI_PULV6VVD_KRTMGTD6_ZTFY3CUR_WTXDPIS5_6YHVXD6J_WOKPDL46",
+            "note": "first key character changed: checksum mismatch, rejected",
+            "pubkey_hex": null
+          },
+          {
+            "accepted": false,
+            "input": "R2R_QE4XODVI_PULV6VVD_KRTMGTD6_ZTFY3CUR_WTXDPIS5_6YHVXD6J_WOKPDL4",
+            "note": "one character short: wrong length, rejected",
+            "pubkey_hex": null
+          },
+          {
+            "accepted": false,
+            "input": "R2R_Q14XODVI_PULV6VVD_KRTMGTD6_ZTFY3CUR_WTXDPIS5_6YHVXD6J_WOKPDL46",
+            "note": "'1' is outside the alphabet: rejected",
+            "pubkey_hex": null
+          },
+          {
+            "accepted": false,
+            "input": "R2R_QE4XODVI_PULV6VVD_KRTMGTD6_ZTFY3CUR_WTXDPIS5_6YHVXD6J_WOKPDL46_ABCDEFGH",
+            "note": "extra group: wrong length, rejected",
+            "pubkey_hex": null
+          }
+        ],
+        "address_raw_hex": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394f1af9e",
+        "contact_address": "R2R_QE4XODVI_PULV6VVD_KRTMGTD6_ZTFY3CUR_WTXDPIS5_6YHVXD6J_WOKPDL46",
+        "ed25519_pub_b64": "gTl3Dqh9F19Wo1Rmw0x+zMuNipG07jeiXfYPW4/Js5Q=",
+        "ed25519_pub_hex": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394",
+        "fingerprint": "cc88dccfa4cd33953ec66c376f6ef24a04c4ee4619675cc3450e390a5c30352b",
+        "fingerprint_preimage_hex": "7232722d69642d76318139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394",
+        "label": "identity_b",
+        "seed_hex": "0202020202020202020202020202020202020202020202020202020202020202"
+      },
+      {
+        "address_checksum_hex": "fdbd93",
+        "address_decode_cases": [
+          {
+            "accepted": true,
+            "input": "R2R_AOQQPP7T_ZYIL4HLQ_3UMOOS6A_TFT6JVRQ_TOSQ2XY5_3SDGIESV_GG4P3PMT",
+            "note": "exact",
+            "pubkey_hex": "03a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8"
+          },
+          {
+            "accepted": true,
+            "input": "r2r_aoqqpp7t_zyil4hlq_3umoos6a_tft6jvrq_tosq2xy5_3sdgiesv_gg4p3pmt",
+            "note": "lowercase",
+            "pubkey_hex": "03a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8"
+          },
+          {
+            "accepted": true,
+            "input": "R2R-AOQQPP7T-ZYIL4HLQ-3UMOOS6A-TFT6JVRQ-TOSQ2XY5-3SDGIESV-GG4P3PMT",
+            "note": "'-' separators",
+            "pubkey_hex": "03a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8"
+          },
+          {
+            "accepted": true,
+            "input": "R2R AOQQPP7T ZYIL4HLQ 3UMOOS6A TFT6JVRQ TOSQ2XY5 3SDGIESV GG4P3PMT",
+            "note": "space separators",
+            "pubkey_hex": "03a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8"
+          },
+          {
+            "accepted": true,
+            "input": "AOQQPP7TZYIL4HLQ3UMOOS6ATFT6JVRQTOSQ2XY53SDGIESVGG4P3PMT",
+            "note": "no prefix, no separators",
+            "pubkey_hex": "03a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8"
+          },
+          {
+            "accepted": true,
+            "input": "r2r-aoqqpp7t-zyil4hlq-3umoos6a-tft6jvrq-tosq2xy5-3sdgiesv-gg4p3pmt",
+            "note": "lowercase with 'r2r-' prefix",
+            "pubkey_hex": "03a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8"
+          },
+          {
+            "accepted": false,
+            "input": "R2R_AOQQPP7T_ZYIL4HLQ_3UMOOS6A_TFT6JVRQ_TOSQ2XY5_3SDGIESV_GG4P3PMA",
+            "note": "last character changed: checksum mismatch, rejected",
+            "pubkey_hex": null
+          },
+          {
+            "accepted": false,
+            "input": "R2R_BOQQPP7T_ZYIL4HLQ_3UMOOS6A_TFT6JVRQ_TOSQ2XY5_3SDGIESV_GG4P3PMT",
+            "note": "first key character changed: checksum mismatch, rejected",
+            "pubkey_hex": null
+          },
+          {
+            "accepted": false,
+            "input": "R2R_AOQQPP7T_ZYIL4HLQ_3UMOOS6A_TFT6JVRQ_TOSQ2XY5_3SDGIESV_GG4P3PM",
+            "note": "one character short: wrong length, rejected",
+            "pubkey_hex": null
+          },
+          {
+            "accepted": false,
+            "input": "R2R_A1QQPP7T_ZYIL4HLQ_3UMOOS6A_TFT6JVRQ_TOSQ2XY5_3SDGIESV_GG4P3PMT",
+            "note": "'1' is outside the alphabet: rejected",
+            "pubkey_hex": null
+          },
+          {
+            "accepted": false,
+            "input": "R2R_AOQQPP7T_ZYIL4HLQ_3UMOOS6A_TFT6JVRQ_TOSQ2XY5_3SDGIESV_GG4P3PMT_ABCDEFGH",
+            "note": "extra group: wrong length, rejected",
+            "pubkey_hex": null
+          }
+        ],
+        "address_raw_hex": "03a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8fdbd93",
+        "contact_address": "R2R_AOQQPP7T_ZYIL4HLQ_3UMOOS6A_TFT6JVRQ_TOSQ2XY5_3SDGIESV_GG4P3PMT",
+        "ed25519_pub_b64": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+        "ed25519_pub_hex": "03a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8",
+        "fingerprint": "06f080fd2509682e820cbdfd3b10fe45c39d6e16e89fb3e1c31ac71ae65f3b61",
+        "fingerprint_preimage_hex": "7232722d69642d763103a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8",
+        "label": "identity_c",
+        "seed_hex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+        "whitepaper_ref": "Appendix A.1 / A.10"
+      }
+    ],
+    "verify": "ed25519_pub = RFC 8032 public key of seed; fingerprint = lowercase_hex(SHA-256('r2r-id-v1' || ed25519_pub)); contact_address = 'R2R_' + base32(pub || SHA3-256(pub || 'R2R')[0..3]) in groups of 8 joined by '_'; decode every address_decode_cases input and compare accepted/pubkey_hex."
+  },
+  "invite_codes_and_fingerprints": {
+    "invite_code": {
+      "all_samples_matched": true,
+      "alphabet": "0123456789ABCDEFGHJKMNPQRSTVWXYZ (Crockford base32: no I, L, O, U)",
+      "entropy": "8 random bytes read as a big-endian uint64 v; character i (0..11) = alphabet[(v >> (55 - 5*i)) & 31]; the low 4 bits of v are unused (60 bits of entropy)",
+      "fixed_entropy_example": {
+        "entropy_hex": "0123456789abcdef",
+        "hint_hex": "5C7193E9",
+        "hint_ipv4": "92.113.147.233",
+        "hinted_code": "R2R-5C71-93E9-28T5-CY4T-QKFF",
+        "note": "computed by re-implementing the encoding above (the library only draws random entropy); normalize_invite_code returns both unchanged",
+        "plain_code": "R2R-28T5-CY4T-QKFF",
+        "whitepaper_ref": "Appendix A.5"
+      },
+      "format_hinted": "R2R-HHHH-HHHH-XXXX-XXXX-XXXX (HHHHHHHH = 8 uppercase hex chars of an IPv4 routing hint)",
+      "format_plain": "R2R-XXXX-XXXX-XXXX",
+      "random_samples_checked": 64,
+      "regex_hinted": "^R2R-[0-9A-F]{4}-[0-9A-F]{4}-[0-9ABCDEFGHJKMNPQRSTVWXYZ]{4}-[0-9ABCDEFGHJKMNPQRSTVWXYZ]{4}-[0-9ABCDEFGHJKMNPQRSTVWXYZ]{4}$",
+      "regex_plain": "^R2R-[0-9ABCDEFGHJKMNPQRSTVWXYZ]{4}-[0-9ABCDEFGHJKMNPQRSTVWXYZ]{4}-[0-9ABCDEFGHJKMNPQRSTVWXYZ]{4}$"
+    },
+    "invite_hint_ip_cases": [
+      {
+        "input": "R2R-5C71-93E9-28T5-CY4T-QKFF",
+        "ip": "92.113.147.233"
+      },
+      {
+        "input": "R2R-28T5-CY4T-QKFF",
+        "ip": ""
+      }
+    ],
+    "ipv4_hint_hex_cases": [
+      {
+        "hex": "5C7193E9",
+        "input": "92.113.147.233"
+      },
+      {
+        "hex": "CB00710A",
+        "input": "203.0.113.10"
+      },
+      {
+        "hex": "",
+        "input": "relay.example"
+      },
+      {
+        "hex": "",
+        "input": "256.1.1.1"
+      }
+    ],
+    "is_uuid_v4": {
+      "cases": [
+        {
+          "input": "3b241101-e2bb-4255-8caf-4136c566a962",
+          "note": "lowercase v4",
+          "valid": true
+        },
+        {
+          "input": "3B241101-E2BB-4255-8CAF-4136C566A962",
+          "note": "uppercase accepted",
+          "valid": true
+        },
+        {
+          "input": "3b241101-e2bb-1255-8caf-4136c566a962",
+          "note": "version 1: invalid",
+          "valid": false
+        },
+        {
+          "input": "3b241101-e2bb-4255-7caf-4136c566a962",
+          "note": "variant nibble 7: invalid",
+          "valid": false
+        },
+        {
+          "input": "3b241101e2bb42558caf4136c566a962",
+          "note": "no dashes: invalid",
+          "valid": false
+        }
+      ],
+      "rule": "36 chars, dashes at 8/13/18/23, hex elsewhere (either case), char 14 == '4', char 19 in 8 9 a b (either case)"
+    },
+    "is_valid_fingerprint": {
+      "cases": [
+        {
+          "input": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+          "note": "64 lowercase hex",
+          "valid": true
+        },
+        {
+          "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "32 chars: minimum",
+          "valid": true
+        },
+        {
+          "input": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "note": "128 chars: maximum",
+          "valid": true
+        },
+        {
+          "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "31 chars: too short",
+          "valid": false
+        },
+        {
+          "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "129 chars: too long",
+          "valid": false
+        },
+        {
+          "input": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b346A",
+          "note": "uppercase hex digit: invalid (callers lowercase first)",
+          "valid": false
+        },
+        {
+          "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaag",
+          "note": "non-hex character",
+          "valid": false
+        },
+        {
+          "input": "",
+          "note": "empty",
+          "valid": false
+        }
+      ],
+      "rule": "32..128 characters, each in [0-9a-f]"
+    },
+    "normalize_invite_code_cases": [
+      {
+        "canonical": "R2R-5C71-93E9-28T5-CY4T-QKFF",
+        "input": "r2r-5c71-93e9-28t5-cy4t-qkff",
+        "note": "lowercase hinted code -> uppercase"
+      },
+      {
+        "canonical": "R2R-28T5-CY4T-QKF0",
+        "input": "R2R-28T5-CY4T-QKFO",
+        "note": "O folds to 0"
+      },
+      {
+        "canonical": "R2R-28T5-CY4T-QKF1",
+        "input": "R2R-28T5-CY4T-QKFI",
+        "note": "I folds to 1"
+      },
+      {
+        "canonical": "R2R-28T5-CY4T-QKF1",
+        "input": "R2R-28T5-CY4T-QKFL",
+        "note": "L folds to 1"
+      },
+      {
+        "canonical": "",
+        "input": "R2R-28T5-CY4T-QKFU",
+        "note": "U is not Crockford: invalid (empty)"
+      },
+      {
+        "canonical": "R2R-28T5-CY4T-QKFF",
+        "input": " R2R-28T5-CY4T-QKFF ",
+        "note": "surrounding whitespace trimmed"
+      },
+      {
+        "canonical": "",
+        "input": "R2R-28T5-CY4T",
+        "note": "too few groups: invalid"
+      },
+      {
+        "canonical": "3b241101-e2bb-4255-8caf-4136c566a962",
+        "input": "3B241101-E2BB-4255-8CAF-4136C566A962",
+        "note": "legacy UUID v4 code -> lowercase"
+      },
+      {
+        "canonical": "",
+        "input": "3b241101-e2bb-1255-8caf-4136c566a962",
+        "note": "legacy code that is not a v4 UUID: invalid"
+      }
+    ],
+    "verify": "invite codes are random: check only the regexes and the fixed-entropy example; compare normalize/hint/is_valid_fingerprint/is_uuid_v4 outputs."
+  },
+  "meta": {
+    "conventions": {
+      "base64": "standard alphabet (A-Z a-z 0-9 + /) with '=' padding on output; decoders accept standard and URL-safe alphabets, padded or not, and ignore \\n \\r space \\t",
+      "byte_order": "all multi-byte integers inside binary layouts are big-endian (len16be)",
+      "hex": "lowercase on output; decoders accept either case",
+      "integers": "Unix seconds as JSON integers; decimal ASCII inside signing strings",
+      "json": "key order is never significant; the reference emits keys sorted alphabetically",
+      "strings": "UTF-8; '\\n' inside a signing string is the single byte 0x0a; no trailing newline"
+    },
+    "generated_by": "tools/protocol-vectors.cpp (r2r-relay 1.0.0)",
+    "openssl_version": "OpenSSL 3.5.5 27 Jan 2026",
+    "purpose": "Known-answer vectors so that a re-implementation of the R2R relay in another language can prove byte-exact compatibility with the reference C++ relay's cryptography, canonical strings and encodings before it ever talks to the network.",
+    "regenerate": "cmake -S . -B build -DR2R_BUILD_VECTORS=ON && cmake --build build --target r2r-vectors && ./build/r2r-vectors > docs/protocol-vectors.json",
+    "stability": "Every value is a function of the fixed inputs in the source. Blobs from randomised primitives (sealed boxes) were generated once and embedded as constants; the generator opens them with the public API on every run, and two runs print identical documents.",
+    "whitepaper": "docs/R2R-WHITEPAPER.md sections 3 (conventions), 4 (identities), 10 (onion) and Appendix A. Values marked whitepaper_ref reproduce Appendix A and are asserted by the generator."
+  },
+  "multi_recipient_layer": {
+    "aad": "the header: 0x02 || n || all n slots (2 + 93n bytes)",
+    "cipher": "AES-256-GCM under K with a fresh 12-byte nonce",
+    "embedded": {
+      "blob_b64": "AgIBExNKwktVAJx99kvblPDk333K7dDlpJIXJpctFxHvJ0rTFxAsTRf5Tfg1z9eu2szvDeykiOyrEV9hzJtl1QZ+OUKZr34Bm0BXi9Q7oO+CGwh4cZy92782VCXGTxIBLfdxhsI2HNGrf0XpyclBbK5LZW+tW2Zv0eV73RPEXVUSdtdJR6yUwiK04B7v4HT65AHV7aU2zWaM4+RIHLlVVp+cOwP45SOgTV37vCXZeNs6HSI3VRDTHbs6pgT8s2rgej2ZW2buG6uQAlxXc4lZ675QqlM7B0gGvwxpR8wt9qYNwxrQwvZl3O9kX8bWvVkDZKfOMLg4jEu4BhFWcVF1/8Op3pQ0OlNam+q814TpkH/PUIojQ1IbdDq9",
+      "blob_hex": "02020113134ac24b55009c7df64bdb94f0e4df7dcaedd0e5a4921726972d1711ef274ad317102c4d17f94df835cfd7aedaccef0deca488ecab115f61cc9b65d5067e394299af7e019b40578bd43ba0ef821b0878719cbddbbf365425c64f12012df77186c2361cd1ab7f45e9c9c9416cae4b656fad5b666fd1e57bdd13c45d551276d74947ac94c222b4e01eefe074fae401d5eda536cd668ce3e4481cb955569f9c3b03f8e523a04d5dfbbc25d978db3a1d22375510d31dbb3aa604fcb36ae07a3d995b66ee1bab90025c57738959ebbe50aa533b074806bf0c6947cc2df6a60dc31ad0c2f665dcef645fc6d6bd590364a7ce30b8388c4bb8061156715175ffc3a9de94343a535a9beabcd784e9907fcf508a2343521b743abd",
+      "blob_len": 282,
+      "generated_by": "crypto::seal_multi({relay_a.x_pub, relay_b.x_pub}, plaintext), run once",
+      "negative": [
+        {
+          "case": "opened by relay_c (unrelated seed)",
+          "opens": false
+        },
+        {
+          "case": "slot 1 and slot 2 swapped",
+          "opens": false
+        },
+        {
+          "case": "n set to 1 and slot 2 removed",
+          "opens": false
+        }
+      ],
+      "opens_with": [
+        "relay_a",
+        "relay_b"
+      ],
+      "parsed": {
+        "aad_hex": "02020113134ac24b55009c7df64bdb94f0e4df7dcaedd0e5a4921726972d1711ef274ad317102c4d17f94df835cfd7aedaccef0deca488ecab115f61cc9b65d5067e394299af7e019b40578bd43ba0ef821b0878719cbddbbf365425c64f12012df77186c2361cd1ab7f45e9c9c9416cae4b656fad5b666fd1e57bdd13c45d551276d74947ac94c222b4e01eefe074fae401d5eda536cd668ce3e4481cb955569f9c3b03f8e523a04d5dfbbc25d978db3a1d22375510d31dbb3aa604",
+        "ciphertext_hex": "90025c57738959ebbe50aa533b074806bf0c6947cc2df6a60dc31ad0c2f665dcef645fc6d6bd590364a7ce30b8388c4bb8061156715175ffc3a9de94343a535a9bea",
+        "n": 2,
+        "nonce_hex": "fcb36ae07a3d995b66ee1bab",
+        "slots_hex": [
+          "0113134ac24b55009c7df64bdb94f0e4df7dcaedd0e5a4921726972d1711ef274ad317102c4d17f94df835cfd7aedaccef0deca488ecab115f61cc9b65d5067e394299af7e019b40578bd43ba0ef821b0878719cbddbbf365425c64f12",
+          "012df77186c2361cd1ab7f45e9c9c9416cae4b656fad5b666fd1e57bdd13c45d551276d74947ac94c222b4e01eefe074fae401d5eda536cd668ce3e4481cb955569f9c3b03f8e523a04d5dfbbc25d978db3a1d22375510d31dbb3aa604"
+        ],
+        "tag_hex": "bcd784e9907fcf508a2343521b743abd",
+        "version": 2
+      },
+      "plaintext": "r2r multi-recipient layer vector: relay A or relay B may open this",
+      "plaintext_hex": "723272206d756c74692d726563697069656e74206c6179657220766563746f723a2072656c61792041206f722072656c61792042206d6179206f70656e2074686973",
+      "recipients": [
+        {
+          "label": "relay_a",
+          "x25519_pub_b64": "L6fz1qOQoL4X9s/7sTmojJs3hm/ncH3U2f1fOozaDWA="
+        },
+        {
+          "label": "relay_b",
+          "x25519_pub_b64": "yQGGpcx4wDNe9mX0Vvmya18A2lt3rLRoAVO2Pi/pRXM="
+        }
+      ]
+    },
+    "layout": "0x02 || n(1) || n x slot(93) || nonce(12) || ciphertext || tag(16); slot_i = seal(candidate_i.x25519_pub, K) where K is a fresh 32-byte layer key (61 + 32 = 93 bytes); 1 <= n <= 3; minimum total 123 bytes",
+    "note": "nothing says which slot belongs to which relay; an opener tries every slot in order and uses the first that unseals to exactly 32 bytes",
+    "verify": "For each slot i, try unseal(slot_i) with your x25519 key; a 32-byte result is the layer key K; then AES-256-GCM-decrypt(K, nonce, ciphertext||tag, aad = header) and compare 'plaintext'. relay_c must fail on every slot; swapped slots must fail the tag for everyone.",
+    "whitepaper_a4b": {
+      "layer_b64": "AgIBEyxEK+AQ+9V+cmAzKKp25x/MwVA6riGTJ9FNnJmT9HIBAQEBAQEBAQEBAQEXWj7PQQ1tUqe8HnOLOM9rUOT/nUlc2Kzh6Ahh2jE6gQHBzvBCTlp64Sxm4phMTI0Bze/YeDqRtEZkDi4flVmds15ISgBxvSGCs7YNCBLBDHACAgICAgICAgICAgJk5wMFWGBFh+18Vwnd+3DOECG7yM48BiHDSd27JmIDWbwLs3xbMv0YvnHn6UNaoglmZmZmZmZmZmZmZmY9vTkpV2hGa/pLIDPBmMZSSVBZZw1Nl3BV7qdWEKwdcFNgTvLIF/zCJNQG/o2FbRp537Ri2Jyasssma4UapTi0ktn22fXGsRCWBpe2ccpgaVNzzYu3VUzXDcIqsCBHWfYJBId59wvrmPYUzmHPT5cFupNZkWwGyVRwikViCccl++uSZpWAJgzvb1iDGNCirjTf+OPTeXbTJabrlFQc7kQ=",
+      "layer_hex": "020201132c442be010fbd57e72603328aa76e71fccc1503aae219327d14d9c9993f472010101010101010101010101175a3ecf410d6d52a7bc1e738b38cf6b50e4ff9d495cd8ace1e80861da313a8101c1cef0424e5a7ae12c66e2984c4c8d01cdefd8783a91b446640e2e1f95599db35e484a0071bd2182b3b60d0812c10c7002020202020202020202020264e7030558604587ed7c5709ddfb70ce1021bbc8ce3c0621c349ddbb26620359bc0bb37c5b32fd18be71e7e9435aa2096666666666666666666666663dbd39295768466bfa4b2033c198c652495059670d4d977055eea75610ac1d7053604ef2c817fcc224d406fe8d856d1a79dfb462d89c9ab2cb266b851aa538b492d9f6d9f5c6b110960697b671ca60695373cd8bb7554cd70dc22ab0204759f609048779f70beb98f614ce61cf4f9705ba9359916c06c954708a456209c725fbeb92669580260cef6f588318d0a2ae34dff8e3d37976d325a6eb94541cee44",
+      "note": "sealed by the reference wallet (JavaScript) with fixed K, nonces and ephemeral keys listed in the white paper; both candidates open it with libr2r_core",
+      "opens_with": [
+        "relay_a",
+        "relay_b"
+      ],
+      "parsed_terminal": {
+        "body_utf8": "hello",
+        "home": "203.0.113.10:8787",
+        "msg_id": "3b241101-e2bb-4255-8caf-4136c566a962",
+        "to": "06f080fd2509682e820cbdfd3b10fe45c39d6e16e89fb3e1c31ac71ae65f3b61"
+      },
+      "plaintext_hex": "0200877b22746f223a2230366630383066643235303936383265383230636264666433623130666534356333396436653136653839666233653163333161633731616536356633623631403230332e302e3131332e31303a38373837222c226964223a2233623234313130312d653262622d343235352d386361662d343133366335363661393632227d68656c6c6f",
+      "whitepaper_ref": "Appendix A.4b"
+    }
+  },
+  "node_identity": {
+    "ed25519": "private key = the seed itself (RFC 8032)",
+    "node_id_construction": "lowercase_hex(SHA-256(\"r2r-node-v1\" || ed25519_pub)).substr(0, 32)",
+    "node_id_tag": "r2r-node-v1",
+    "nodes": [
+      {
+        "ed25519_pub_b64": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+        "ed25519_pub_hex": "29acbae141bccaf0b22e1a94d34d0bc7361e526d0bfe12c89794bc9322966dd7",
+        "label": "relay_a",
+        "node_id": "e3331ed6dce0d2adba2dbd8e7605915f",
+        "node_id_preimage_hex": "7232722d6e6f64652d763129acbae141bccaf0b22e1a94d34d0bc7361e526d0bfe12c89794bc9322966dd7",
+        "seed_hex": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+        "whitepaper_ref": "Appendix A.2",
+        "x25519_priv_hex": "1a23ab6fb70bf0e5ddc656e86da68e35b07a0db11d9c2cf602ce59f915560889",
+        "x25519_pub_b64": "L6fz1qOQoL4X9s/7sTmojJs3hm/ncH3U2f1fOozaDWA=",
+        "x25519_pub_hex": "2fa7f3d6a390a0be17f6cffbb139a88c9b37866fe7707dd4d9fd5f3a8cda0d60"
+      },
+      {
+        "ed25519_pub_b64": "yFOtDwzSthmuqSzuxP1Wok1kmdWEznklfkXP2BObYKc=",
+        "ed25519_pub_hex": "c853ad0f0cd2b619aea92ceec4fd56a24d6499d584ce79257e45cfd8139b60a7",
+        "label": "relay_b",
+        "node_id": "c604a70058b0f3a2c91c804fc65fa374",
+        "node_id_preimage_hex": "7232722d6e6f64652d7631c853ad0f0cd2b619aea92ceec4fd56a24d6499d584ce79257e45cfd8139b60a7",
+        "seed_hex": "7777777777777777777777777777777777777777777777777777777777777777",
+        "whitepaper_ref": "Appendix A.4b candidate 2",
+        "x25519_priv_hex": "5c5b74d7e07282891d3830385062a1c219036306bccdaf987566ad2bfd75ec86",
+        "x25519_pub_b64": "yQGGpcx4wDNe9mX0Vvmya18A2lt3rLRoAVO2Pi/pRXM=",
+        "x25519_pub_hex": "c90186a5cc78c0335ef665f456f9b26b5f00da5b77acb4680153b63e2fe94573"
+      },
+      {
+        "ed25519_pub_b64": "MPlvWC+Wc+WH4sqdEhqTFL0Oy06n0EL81ZZnnHDnMMI=",
+        "ed25519_pub_hex": "30f96f582f9673e587e2ca9d121a9314bd0ecb4ea7d042fcd596679c70e730c2",
+        "label": "relay_c",
+        "node_id": "21f6e4a4d46948ebdf8757e31081ef8b",
+        "node_id_preimage_hex": "7232722d6e6f64652d763130f96f582f9673e587e2ca9d121a9314bd0ecb4ea7d042fcd596679c70e730c2",
+        "seed_hex": "9c1185a5c5e9fc54612808977ee8f548b2258d31f7e2b0a5a9b5d3c0e4f6a7b8",
+        "x25519_priv_hex": "be4cc5f9138808751420e00a81e5afe48d5a6b182f07cbe1323feb1280d1b0a4",
+        "x25519_pub_b64": "siNkU9/3/F8FhN32F9AvQ0BiGvV/VJjLAlI/3sXBGyc=",
+        "x25519_pub_hex": "b2236453dff7fc5f0584ddf617d02f4340621af57f5498cb02523fdec5c11b27"
+      }
+    ],
+    "verify": "node_id = lowercase_hex(SHA-256('r2r-node-v1' || ed25519_pub))[0..32] (first 16 bytes); x25519_priv = HKDF-SHA256(ikm = seed, salt = empty, info = 'r2r-x25519-v1', L = 32); x25519_pub = X25519(x25519_priv, basepoint 9) with RFC 7748 clamping.",
+    "x25519_hkdf": {
+      "hash": "SHA-256",
+      "ikm": "the 32-byte seed",
+      "info": "r2r-x25519-v1",
+      "length": 32,
+      "note": "the x25519 private key is NOT the ed25519 key converted; it is an independent HKDF output of the same seed",
+      "salt": "empty (RFC 5869: equivalent to 32 zero bytes)"
+    }
+  },
+  "onion": {
+    "build_order": "seal the terminal plaintext to the last position; then for each earlier position, from last to first: plaintext = routing header naming the NEXT position's candidates || the layer just built, sealed to this position's candidates",
+    "client_frame": "{\"t\":\"onion\",\"blob\":\"<base64 outer layer>\"} sent with NO hello; success is silent",
+    "layer": "each layer is a multi-recipient sealed box (see multi_recipient_layer) sealed to the 1..3 candidates of one route position; the outermost layer is what the client sends",
+    "route_a_then_b": {
+      "blob_b64": "AgEBY+KLGNFdum0Es3Db1dDewean5/5yUkDLCvjJQG7RTzOwhQ+V8h4TTbtkgAva7NcQWMmyFzKH0frBCf8mfWOu2+M8Ceh7K8h4873krEdRZfxEpHhylbYwOH87hqi3QYxX6bj41Qnp/NfOACdDn4V97whTGrM+dm4pGiwxNawf4j5YRWWcDSF+poni9+WB/w7BuDatvpk+KFkXoTk1rK0+BjIiaAJXkjnWV6+4SNtpWl7acEXF+3aE6vCeOKPVkPiJfM8XEGJwIyZO7jfJP3KaMyu9LuXxc/SjmWNgfSWK1huz0Z25I5Rs10DpAkTDgOCkQNCYUOku3+h8wN+cKPMT/dPvXpiPvWdZxlmDab5ZaSyhXfAoOk12H4gDoBjYlVDeegV4gxBYH4FHGfBGikgzCPBZuS5kV4jtXBo6R5Ot53XEj19x4pkk18OzXMEGkQ0QIGEUzOjtqYYPB5k65YqdeJ58n4RaUVTrThLZXkcHRIjdil7GiR8ZupC43UhRw64cKW/sNdM9FxtxJt7OgcwivdbhPXgR7etFUgF68TRvhOCs3mqtEC0esLaPoAWLmCVhtHBUauLipGXNgA==",
+      "blob_hex": "02010163e28b18d15dba6d04b370dbd5d0dec1e6a7e7fe725240cb0af8c9406ed14f33b0850f95f21e134dbb64800bdaecd71058c9b2173287d1fac109ff267d63aedbe33c09e87b2bc878f3bde4ac475165fc44a4787295b630387f3b86a8b7418c57e9b8f8d509e9fcd7ce0027439f857def08531ab33e766e291a2c3135ac1fe23e5845659c0d217ea689e2f7e581ff0ec1b836adbe993e285917a13935acad3e0632226802579239d657afb848db695a5eda7045c5fb7684eaf09e38a3d590f8897ccf1710627023264eee37c93f729a332bbd2ee5f173f4a39963607d258ad61bb3d19db923946cd740e90244c380e0a440d09850e92edfe87cc0df9c28f313fdd3ef5e988fbd6759c6598369be59692ca15df0283a4d761f8803a018d89550de7a05788310581f814719f0468a483308f059b92e645788ed5c1a3a4793ade775c48f5f71e29924d7c3b35cc106910d10206114cce8eda9860f07993ae58a9d789e7c9f845a5154eb4e12d95e47074488dd8a5ec6891f19ba90b8dd4851c3ae1c296fec35d33d171b7126dece81cc22bdd6e13d7811edeb4552017af1346f84e0acde6aad102d1eb0b68fa0058b982561b470546ae2e2a465cd80",
+      "blob_len": 445,
+      "client_frame": {
+        "blob": "AgEBY+KLGNFdum0Es3Db1dDewean5/5yUkDLCvjJQG7RTzOwhQ+V8h4TTbtkgAva7NcQWMmyFzKH0frBCf8mfWOu2+M8Ceh7K8h4873krEdRZfxEpHhylbYwOH87hqi3QYxX6bj41Qnp/NfOACdDn4V97whTGrM+dm4pGiwxNawf4j5YRWWcDSF+poni9+WB/w7BuDatvpk+KFkXoTk1rK0+BjIiaAJXkjnWV6+4SNtpWl7acEXF+3aE6vCeOKPVkPiJfM8XEGJwIyZO7jfJP3KaMyu9LuXxc/SjmWNgfSWK1huz0Z25I5Rs10DpAkTDgOCkQNCYUOku3+h8wN+cKPMT/dPvXpiPvWdZxlmDab5ZaSyhXfAoOk12H4gDoBjYlVDeegV4gxBYH4FHGfBGikgzCPBZuS5kV4jtXBo6R5Ot53XEj19x4pkk18OzXMEGkQ0QIGEUzOjtqYYPB5k65YqdeJ58n4RaUVTrThLZXkcHRIjdil7GiR8ZupC43UhRw64cKW/sNdM9FxtxJt7OgcwivdbhPXgR7etFUgF68TRvhOCs3mqtEC0esLaPoAWLmCVhtHBUauLipGXNgA==",
+        "t": "onion"
+      },
+      "generated_by": "onion::build({{relay_a}, {relay_b}}, terminal), run once",
+      "hop_a": {
+        "forwards_frame": {
+          "blob": "AgEBYu9oD0A6tgHOPPkM2L/l06oN7uPdnkIjepMPLlKQ9n4QDwCFBABDp+A6KuW15xeXJWvub+JITB+dme2in+c09V+jTIF/bA2R/DCKB8aSBwCuLKCK8eTI7ybZau/m3nqjVy3WJCmXHoGtCqmenXPoS+WBGTl3L5Z8mr4IZXmp1yEsQoIkqDFKjmB0/quMDVjh6f3mTrhxgZSw3y2iFdRC98dgSslfkMtPUi9nD/3imSJsB3+WYf1/hIXCK7bXiQdI8xJCDJd/kst4N/bzAFP0S/JLEu6jyvqWzosGJvExp4S6p3rSvU1mcArQq17VsixmyOfX7KTe+ujcWzdaxrNiyogXaTBbw2y0mF6elBndlNNo0MvMQKbNW/PF9O7aN3OlV27SRiFbfmpd/g==",
+          "hops": 7,
+          "t": "onion"
+        },
+        "forwards_to": "the first 'next' candidate with a live link, else dialled in order; itself is skipped",
+        "inner_blob_b64": "AgEBYu9oD0A6tgHOPPkM2L/l06oN7uPdnkIjepMPLlKQ9n4QDwCFBABDp+A6KuW15xeXJWvub+JITB+dme2in+c09V+jTIF/bA2R/DCKB8aSBwCuLKCK8eTI7ybZau/m3nqjVy3WJCmXHoGtCqmenXPoS+WBGTl3L5Z8mr4IZXmp1yEsQoIkqDFKjmB0/quMDVjh6f3mTrhxgZSw3y2iFdRC98dgSslfkMtPUi9nD/3imSJsB3+WYf1/hIXCK7bXiQdI8xJCDJd/kst4N/bzAFP0S/JLEu6jyvqWzosGJvExp4S6p3rSvU1mcArQq17VsixmyOfX7KTe+ujcWzdaxrNiyogXaTBbw2y0mF6elBndlNNo0MvMQKbNW/PF9O7aN3OlV27SRiFbfmpd/g==",
+        "inner_blob_hex": "02010162ef680f403ab601ce3cf90cd8bfe5d3aa0deee3dd9e42237a930f2e5290f67e100f0085040043a7e03a2ae5b5e71797256bee6fe2484c1f9d99eda29fe734f55fa34c817f6c0d91fc308a07c6920700ae2ca08af1e4c8ef26d96aefe6de7aa3572dd62429971e81ad0aa99e9d73e84be5811939772f967c9abe086579a9d7212c428224a8314a8e6074feab8c0d58e1e9fde64eb8718194b0df2da215d442f7c7604ac95f90cb4f522f670ffde299226c077f9661fd7f8485c22bb6d7890748f312420c977f92cb7837f6f30053f44bf24b12eea3cafa96ce8b0626f131a784baa77ad2bd4d66700ad0ab5ed5b22c66c8e7d7eca4defae8dc5b375ac6b362ca881769305bc36cb4985e9e9419dd94d368d0cbcc40a6cd5bf3c5f4eeda3773a5576ed246215b7e6a5dfe",
+        "inner_blob_len": 301,
+        "kind": "routing",
+        "layer_plaintext_hex": "0101123139382e35312e3130302e32303a3837383702010162ef680f403ab601ce3cf90cd8bfe5d3aa0deee3dd9e42237a930f2e5290f67e100f0085040043a7e03a2ae5b5e71797256bee6fe2484c1f9d99eda29fe734f55fa34c817f6c0d91fc308a07c6920700ae2ca08af1e4c8ef26d96aefe6de7aa3572dd62429971e81ad0aa99e9d73e84be5811939772f967c9abe086579a9d7212c428224a8314a8e6074feab8c0d58e1e9fde64eb8718194b0df2da215d442f7c7604ac95f90cb4f522f670ffde299226c077f9661fd7f8485c22bb6d7890748f312420c977f92cb7837f6f30053f44bf24b12eea3cafa96ce8b0626f131a784baa77ad2bd4d66700ad0ab5ed5b22c66c8e7d7eca4defae8dc5b375ac6b362ca881769305bc36cb4985e9e9419dd94d368d0cbcc40a6cd5bf3c5f4eeda3773a5576ed246215b7e6a5dfe",
+        "n": 1,
+        "next": [
+          "198.51.100.20:8787"
+        ],
+        "opened_by": "relay_a",
+        "routing_header_hex": "0101123139382e35312e3130302e32303a38373837",
+        "type_byte": 1
+      },
+      "hop_b": {
+        "body_hex": "68656c6c6f207468726f75676820746865206f6e696f6e",
+        "body_utf8": "hello through the onion",
+        "hint": "vector",
+        "home": "198.51.100.20:8787",
+        "kind": "terminal",
+        "layer_plaintext_hex": "0200987b2268696e74223a22766563746f72222c226964223a2233623234313130312d653262622d343235352d386361662d343133366335363661393632222c22746f223a2238306566663962653930303165373262346435346430643938633663643437356138323936393438653633313730633661393535333366633131336233343634403139382e35312e3130302e32303a38373837227d68656c6c6f207468726f75676820746865206f6e696f6e",
+        "meta_json": "{\"hint\":\"vector\",\"id\":\"3b241101-e2bb-4255-8caf-4136c566a962\",\"to\":\"80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464@198.51.100.20:8787\"}",
+        "meta_len": 152,
+        "msg_id": "3b241101-e2bb-4255-8caf-4136c566a962",
+        "opened_by": "relay_b",
+        "to": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+        "type_byte": 2
+      },
+      "negative": [
+        {
+          "case": "relay_b opens the outer blob",
+          "opens": false
+        },
+        {
+          "case": "relay_c opens the outer blob",
+          "opens": false
+        },
+        {
+          "case": "relay_a opens the inner blob",
+          "opens": false
+        },
+        {
+          "case": "relay_c opens the inner blob",
+          "opens": false
+        }
+      ],
+      "positions": [
+        [
+          {
+            "address": "203.0.113.10:8787",
+            "relay": "relay_a",
+            "x25519_b64": "L6fz1qOQoL4X9s/7sTmojJs3hm/ncH3U2f1fOozaDWA="
+          }
+        ],
+        [
+          {
+            "address": "198.51.100.20:8787",
+            "relay": "relay_b",
+            "x25519_b64": "yQGGpcx4wDNe9mX0Vvmya18A2lt3rLRoAVO2Pi/pRXM="
+          }
+        ]
+      ],
+      "terminal": {
+        "body_hex": "68656c6c6f207468726f75676820746865206f6e696f6e",
+        "body_utf8": "hello through the onion",
+        "hint": "vector",
+        "home": "198.51.100.20:8787",
+        "meta_to_field": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464@198.51.100.20:8787",
+        "msg_id": "3b241101-e2bb-4255-8caf-4136c566a962",
+        "to": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464"
+      }
+    },
+    "route_a_then_b_or_c": {
+      "blob_b64": "AgEB1jbkBkO2VRaeD1pyqdPG1umMB1nOJSfZOwiWpAhHqH4xXVx7doPN4SFqxeoSXMI3vkApP/1WrY1xjXf/vkWRTBmjQYCHeXosp2OaywyfwhGi/QJlCdh9gNnPBtBSMA0r2bAzLT24QXChKi2glLTn1x6yaVNYE99USI3qfGdh22egm8AggFumFO6Jw5I6qqEU/M5A4sE9HVUKcjAsxqD/VhAtpZhIjzcrHsYIhR+CAW+UKo51SVAV5jWHymT4OaVAuwe4HWsfGZnTuOnRG6/lYMSVusHv7B/yWyDxysBMtuDuu4gggfHlaMRTyKG6qXKRvelKRKjtsPGaYq/ZZsUWrghbjuig6MirFv5VL3hxbKvnFDVX7EXPN6vqXmWT6sF3iwdSqFmJkhdmYpfcaK4K6EqA39Y4tvSntQSspM4kRFQs+GTTcA5UxWOwVUNToTyra4o89/maP/CRcaSTRy+2OQ3uJ3wIyjTJGiiIPDwcs2vCfuDHXbMEWBbLTEGZ5Wd1ncYQGRFj3355pc8hTyDEFmANZT3JvWSzg5v2ZP11gKRWxEhiD/XrCsFs3OGRC+i7O2kD26+RklAZ9sLBgUwXh6f+2aJjQIm8E4lSwKoim4bRP5WgT7cJ4bsvohou5br73z2cwBwB5WwVYGgnNIsCkgmbHrVk4wLF/kUb9G32RurT147dw6VDTW2xpsJEHB0G6A+CqOf82jkeXOFzs898KnfL8PF7SBwyobfHRg==",
+      "blob_hex": "020101d636e40643b655169e0f5a72a9d3c6d6e98c0759ce2527d93b0896a40847a87e315d5c7b7683cde1216ac5ea125cc237be40293ffd56ad8d718d77ffbe45914c19a3418087797a2ca7639acb0c9fc211a2fd026509d87d80d9cf06d052300d2bd9b0332d3db84170a12a2da094b4e7d71eb269535813df54488dea7c6761db67a09bc020805ba614ee89c3923aaaa114fcce40e2c13d1d550a72302cc6a0ff56102da598488f372b1ec608851f82016f942a8e75495015e63587ca64f839a540bb07b81d6b1f1999d3b8e9d11bafe560c495bac1efec1ff25b20f1cac04cb6e0eebb882081f1e568c453c8a1baa97291bde94a44a8edb0f19a62afd966c516ae085b8ee8a0e8c8ab16fe552f78716cabe7143557ec45cf37abea5e6593eac1778b0752a859899217666297dc68ae0ae84a80dfd638b6f4a7b504aca4ce2444542cf864d3700e54c563b0554353a13cab6b8a3cf7f99a3ff09171a493472fb6390dee277c08ca34c91a28883c3c1cb36bc27ee0c75db3045816cb4c4199e567759dc610191163df7e79a5cf214f20c416600d653dc9bd64b3839bf664fd7580a456c448620ff5eb0ac16cdce1910be8bb3b6903dbaf91925019f6c2c1814c1787a7fed9a2634089bc138952c0aa229b86d13f95a04fb709e1bb2fa21a2ee5bafbdf3d9cc01c01e56c15606827348b0292099b1eb564e302c5fe451bf46df646ead3d78eddc3a5434d6db1a6c2441c1d06e80f82a8e7fcda391e5ce173b3cf7c2a77cbf0f17b481c32a1b7c746",
+      "blob_len": 559,
+      "generated_by": "onion::build({{relay_a}, {relay_b, relay_c}}, terminal), run once",
+      "hop_a": {
+        "forwards_frame": {
+          "blob": "AgIBtj5lgQPKNkU1+lK8/nkIYXaSjIGQkte/uyZY6hLEpH0hv/krP4R/fnkTTzLkIbwCQUhZtlFutf9jW4niDg3WyO3fdJ8MCvr6n26jZtghmO9CO0/QrTd1wT6O43YBX3k4obEoXUfyqRfeyQfUgVlRwBFsUWqi41cflCnL7DY1tUlb7FBPXZ7ZRYoExOSqdXio/Y5BmFUil5pZDVHGs778mpuMzXaZUnztloWcxvPHzGUt8vDa12/RUEPUbRYafax96Kpo6s9mKjLGyjfYgtFTN8Mu0G7ZQqSCsc9SyWEaDZog58Vbagkd4RHqvGcaF1iJpL3tyeGLJQ9JD/5sVlMS7c3Afk5787zrOhSm5PFCo65ShYVpxSi5iJ6HDY11APokIv+1bDv5WwAAsb3VE6yBDRQjcnzvi48xfRMu60E7k9P82me0vcvdEDnierhM4/UeU9qECykpmEUPr547GHLrI5hRPHALU6l8modiMDPXzVrGQTRh5q8goo/lMBx0w5F1zhRjc7RQ+g==",
+          "hops": 7,
+          "t": "onion"
+        },
+        "forwards_to": "the first 'next' candidate with a live link, else dialled in order; itself is skipped",
+        "inner_blob_b64": "AgIBtj5lgQPKNkU1+lK8/nkIYXaSjIGQkte/uyZY6hLEpH0hv/krP4R/fnkTTzLkIbwCQUhZtlFutf9jW4niDg3WyO3fdJ8MCvr6n26jZtghmO9CO0/QrTd1wT6O43YBX3k4obEoXUfyqRfeyQfUgVlRwBFsUWqi41cflCnL7DY1tUlb7FBPXZ7ZRYoExOSqdXio/Y5BmFUil5pZDVHGs778mpuMzXaZUnztloWcxvPHzGUt8vDa12/RUEPUbRYafax96Kpo6s9mKjLGyjfYgtFTN8Mu0G7ZQqSCsc9SyWEaDZog58Vbagkd4RHqvGcaF1iJpL3tyeGLJQ9JD/5sVlMS7c3Afk5787zrOhSm5PFCo65ShYVpxSi5iJ6HDY11APokIv+1bDv5WwAAsb3VE6yBDRQjcnzvi48xfRMu60E7k9P82me0vcvdEDnierhM4/UeU9qECykpmEUPr547GHLrI5hRPHALU6l8modiMDPXzVrGQTRh5q8goo/lMBx0w5F1zhRjc7RQ+g==",
+        "inner_blob_hex": "020201b63e658103ca364535fa52bcfe79086176928c819092d7bfbb2658ea12c4a47d21bff92b3f847f7e79134f32e421bc02414859b6516eb5ff635b89e20e0dd6c8eddf749f0c0afafa9f6ea366d82198ef423b4fd0ad3775c13e8ee376015f7938a1b1285d47f2a917dec907d4815951c0116c516aa2e3571f9429cbec3635b5495bec504f5d9ed9458a04c4e4aa7578a8fd8e41985522979a590d51c6b3befc9a9b8ccd7699527ced96859cc6f3c7cc652df2f0dad76fd15043d46d161a7dac7de8aa68eacf662a32c6ca37d882d15337c32ed06ed942a482b1cf52c9611a0d9a20e7c55b6a091de111eabc671a175889a4bdedc9e18b250f490ffe6c565312edcdc07e4e7bf3bceb3a14a6e4f142a3ae52858569c528b9889e870d8d7500fa2422ffb56c3bf95b0000b1bdd513ac810d1423727cef8b8f317d132eeb413b93d3fcda67b4bdcbdd1039e27ab84ce3f51e53da840b292998450faf9e3b1872eb2398513c700b53a97c9a87623033d7cd5ac6413461e6af20a28fe5301c74c39175ce146373b450fa",
+        "inner_blob_len": 394,
+        "kind": "routing",
+        "layer_plaintext_hex": "0102123139382e35312e3130302e32303a383738371472656c61792d632e6578616d706c653a38373838020201b63e658103ca364535fa52bcfe79086176928c819092d7bfbb2658ea12c4a47d21bff92b3f847f7e79134f32e421bc02414859b6516eb5ff635b89e20e0dd6c8eddf749f0c0afafa9f6ea366d82198ef423b4fd0ad3775c13e8ee376015f7938a1b1285d47f2a917dec907d4815951c0116c516aa2e3571f9429cbec3635b5495bec504f5d9ed9458a04c4e4aa7578a8fd8e41985522979a590d51c6b3befc9a9b8ccd7699527ced96859cc6f3c7cc652df2f0dad76fd15043d46d161a7dac7de8aa68eacf662a32c6ca37d882d15337c32ed06ed942a482b1cf52c9611a0d9a20e7c55b6a091de111eabc671a175889a4bdedc9e18b250f490ffe6c565312edcdc07e4e7bf3bceb3a14a6e4f142a3ae52858569c528b9889e870d8d7500fa2422ffb56c3bf95b0000b1bdd513ac810d1423727cef8b8f317d132eeb413b93d3fcda67b4bdcbdd1039e27ab84ce3f51e53da840b292998450faf9e3b1872eb2398513c700b53a97c9a87623033d7cd5ac6413461e6af20a28fe5301c74c39175ce146373b450fa",
+        "n": 2,
+        "next": [
+          "198.51.100.20:8787",
+          "relay-c.example:8788"
+        ],
+        "opened_by": "relay_a",
+        "routing_header_hex": "0102123139382e35312e3130302e32303a383738371472656c61792d632e6578616d706c653a38373838",
+        "type_byte": 1
+      },
+      "hop_b": {
+        "body_hex": "68656c6c6f207468726f75676820746865206f6e696f6e",
+        "body_utf8": "hello through the onion",
+        "hint": "vector",
+        "home": "198.51.100.20:8787",
+        "kind": "terminal",
+        "layer_plaintext_hex": "0200987b2268696e74223a22766563746f72222c226964223a2233623234313130312d653262622d343235352d386361662d343133366335363661393632222c22746f223a2238306566663962653930303165373262346435346430643938633663643437356138323936393438653633313730633661393535333366633131336233343634403139382e35312e3130302e32303a38373837227d68656c6c6f207468726f75676820746865206f6e696f6e",
+        "meta_json": "{\"hint\":\"vector\",\"id\":\"3b241101-e2bb-4255-8caf-4136c566a962\",\"to\":\"80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464@198.51.100.20:8787\"}",
+        "meta_len": 152,
+        "msg_id": "3b241101-e2bb-4255-8caf-4136c566a962",
+        "opened_by": "relay_b",
+        "to": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+        "type_byte": 2
+      },
+      "hop_c_standby": {
+        "body_hex": "68656c6c6f207468726f75676820746865206f6e696f6e",
+        "body_utf8": "hello through the onion",
+        "hint": "vector",
+        "home": "198.51.100.20:8787",
+        "kind": "terminal",
+        "layer_plaintext_hex": "0200987b2268696e74223a22766563746f72222c226964223a2233623234313130312d653262622d343235352d386361662d343133366335363661393632222c22746f223a2238306566663962653930303165373262346435346430643938633663643437356138323936393438653633313730633661393535333366633131336233343634403139382e35312e3130302e32303a38373837227d68656c6c6f207468726f75676820746865206f6e696f6e",
+        "meta_json": "{\"hint\":\"vector\",\"id\":\"3b241101-e2bb-4255-8caf-4136c566a962\",\"to\":\"80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464@198.51.100.20:8787\"}",
+        "meta_len": 152,
+        "msg_id": "3b241101-e2bb-4255-8caf-4136c566a962",
+        "opened_by": "relay_c",
+        "to": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+        "type_byte": 2
+      },
+      "note": "relay_c is a standby terminal: it opens the same layer and, because 'home' names relay_b, forwards the payload there as an ordinary send; relay_b stores it",
+      "positions": [
+        [
+          {
+            "address": "203.0.113.10:8787",
+            "relay": "relay_a",
+            "x25519_b64": "L6fz1qOQoL4X9s/7sTmojJs3hm/ncH3U2f1fOozaDWA="
+          }
+        ],
+        [
+          {
+            "address": "198.51.100.20:8787",
+            "relay": "relay_b",
+            "x25519_b64": "yQGGpcx4wDNe9mX0Vvmya18A2lt3rLRoAVO2Pi/pRXM="
+          },
+          {
+            "address": "relay-c.example:8788",
+            "relay": "relay_c",
+            "x25519_b64": "siNkU9/3/F8FhN32F9AvQ0BiGvV/VJjLAlI/3sXBGyc="
+          }
+        ]
+      ],
+      "terminal": {
+        "body_hex": "68656c6c6f207468726f75676820746865206f6e696f6e",
+        "body_utf8": "hello through the onion",
+        "hint": "vector",
+        "home": "198.51.100.20:8787",
+        "meta_to_field": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464@198.51.100.20:8787",
+        "msg_id": "3b241101-e2bb-4255-8caf-4136c566a962",
+        "to": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464"
+      }
+    },
+    "routing_plaintext": "0x01 || n(1) || n x ( len8 || \"host:port\" ) || inner layer bytes; addresses are the sender's text and are canonicalised by the relay with parse_address(default port 8787); the inner layer must be >= 123 bytes",
+    "terminal_plaintext": "0x02 || len16be(2) || meta JSON (UTF-8) || body; meta = {\"to\":\"<fp>[@<home relay>]\",\"id\":\"<uuid4>\",\"hint\"?:\"<=128 chars\"}; body is 1..max_payload bytes of end-to-end ciphertext; the reference builder emits meta keys in alphabetical order (hint, id, to) but any order parses",
+    "verify": "Open 'blob' with relay_a (multi-recipient layer), parse the routing plaintext, forward 'inner_blob' to a 'next' candidate, open it there and parse the terminal record; compare every field. A port that builds routes should produce blobs that these relays peel to the same plaintexts (the blobs themselves differ because sealing is randomised)."
+  },
+  "sealed_box": {
+    "deterministic": {
+      "aad_hex": "01132c442be010fbd57e72603328aa76e71fccc1503aae219327d14d9c9993f4722fa7f3d6a390a0be17f6cffbb139a88c9b37866fe7707dd4d9fd5f3a8cda0d60",
+      "aes_key_hex": "248220de10b4d4b25851948f96371c571686268d83426c388d558c1f8a6c2caa",
+      "blob_b64": "ARMsRCvgEPvVfnJgMyiqducfzMFQOq4hkyfRTZyZk/RyZGVmZ2hpamtsbW5vOG18Tfwq3K+F5XaPO2Mxp6wKTmp+BQSRQgrIGYMtSfIByU1HSFwUyBims+nammZef9GtxDvZPzFnlvffJobqKTCWnN13Z4SmpYsiSSJ5rjlqt9y7TpYDFRBwqZaGcHdcPPy8P9d0Al76VBzrzz3PBjfnOd+OT8csOmGzQNXJN+OtQ4ARIsOFZ0Vdp3q+LFgxGRU1byS9S67QybxSJ97cOAKbBjm9d0v80g==",
+      "blob_hex": "01132c442be010fbd57e72603328aa76e71fccc1503aae219327d14d9c9993f4726465666768696a6b6c6d6e6f386d7c4dfc2adcaf85e5768f3b6331a7ac0a4e6a7e050491420ac819832d49f201c94d47485c14c818a6b3e9da9a665e7fd1adc43bd93f316796f7df2686ea2930969cdd776784a6a58b22492279ae396ab7dcbb4e9603151070a9968670775c3cfcbc3fd774025efa541cebcf3dcf0637e739df8e4fc72c3a61b340d5c937e3ad43801122c38567455da77abe2c58311915356f24bd4baed0c9bc5227dedc38029b0639bd774bfcd2",
+      "ciphertext_hex": "386d7c4dfc2adcaf85e5768f3b6331a7ac0a4e6a7e050491420ac819832d49f201c94d47485c14c818a6b3e9da9a665e7fd1adc43bd93f316796f7df2686ea2930969cdd776784a6a58b22492279ae396ab7dcbb4e9603151070a9968670775c3cfcbc3fd774025efa541cebcf3dcf0637e739df8e4fc72c3a61b340d5c937e3ad43801122c38567455da77abe2c58311915356f24bd4baed0",
+      "eph_priv_hex": "4242424242424242424242424242424242424242424242424242424242424242",
+      "eph_pub_hex": "132c442be010fbd57e72603328aa76e71fccc1503aae219327d14d9c9993f472",
+      "fails_with": [
+        "relay_b"
+      ],
+      "hkdf_info": "r2r-seal-v1",
+      "hkdf_salt_hex": "132c442be010fbd57e72603328aa76e71fccc1503aae219327d14d9c9993f4722fa7f3d6a390a0be17f6cffbb139a88c9b37866fe7707dd4d9fd5f3a8cda0d60",
+      "nonce_hex": "6465666768696a6b6c6d6e6f",
+      "opens_with": [
+        "relay_a"
+      ],
+      "plaintext": "{\"v\":1,\"deliver\":{\"to\":\"06f080fd2509682e820cbdfd3b10fe45c39d6e16e89fb3e1c31ac71ae65f3b61\",\"id\":\"3b241101-e2bb-4255-8caf-4136c566a962\",\"body\":\"aGVsbG8=\"}}",
+      "plaintext_hex": "7b2276223a312c2264656c69766572223a7b22746f223a2230366630383066643235303936383265383230636264666433623130666534356333396436653136653839666233653163333161633731616536356633623631222c226964223a2233623234313130312d653262622d343235352d386361662d343133366335363661393632222c22626f6479223a22614756736247383d227d7d",
+      "recipient": "relay_a",
+      "recipient_x25519_pub_hex": "2fa7f3d6a390a0be17f6cffbb139a88c9b37866fe7707dd4d9fd5f3a8cda0d60",
+      "tag_hex": "c9bc5227dedc38029b0639bd774bfcd2",
+      "whitepaper_ref": "Appendix A.4",
+      "x25519_shared_hex": "1ade2d30742f253a94c2288399f519ce286d87a05b54d728ff78bbfcc6922557"
+    },
+    "kdf": {
+      "aad": "0x01 || eph_pub || recipient_x25519_pub (65 bytes): the version byte and both public keys",
+      "cipher": "AES-256-GCM, 12-byte nonce, 16-byte tag appended to the ciphertext",
+      "hkdf": "HKDF-SHA256(ikm = shared, salt = eph_pub || recipient_x25519_pub (64 bytes), info = \"r2r-seal-v1\", L = 32)",
+      "note": "the recipient's own public key is bound into both the HKDF salt and the AAD, so a blob sealed to one relay cannot be opened by, or re-targeted to, another",
+      "shared": "X25519(eph_priv, recipient_x25519_pub); an all-zero result MUST be rejected"
+    },
+    "layout": "version(1)=0x01 || eph_pub(32) || nonce(12) || ciphertext || tag(16); overhead 61 bytes",
+    "library_generated": {
+      "blob_b64": "Aek0giDGtLK+2FrWdJ8HO8Apg6An4zZAuyZIRFUzFlkJj/fJDkg4cJyMsGd0bBYj8u3rtNoJjVBrOWWcnqBaxHoWmXYeq/j9kahNdzGYh4HbB3gFlLP+1cenvPaO+T+JtxCutBVlJnXc",
+      "blob_hex": "01e9348220c6b4b2bed85ad6749f073bc02983a027e33640bb26484455331659098ff7c90e4838709c8cb067746c1623f2edebb4da098d506b39659c9ea05ac47a1699761eabf8fd91a84d7731988781db07780594b3fed5c7a7bcf68ef93f89b710aeb415652675dc",
+      "blob_len": 105,
+      "generated_by": "crypto::seal(relay_a.x_pub, plaintext) with a random ephemeral key and nonce, run once",
+      "negative": [
+        {
+          "case": "opened by relay_b",
+          "opens": false
+        },
+        {
+          "case": "opened by relay_c",
+          "opens": false
+        },
+        {
+          "case": "first ciphertext byte flipped",
+          "opens": false
+        },
+        {
+          "case": "version byte set to 0x02",
+          "opens": false
+        },
+        {
+          "case": "last tag byte flipped",
+          "opens": false
+        }
+      ],
+      "opens_with": [
+        "relay_a"
+      ],
+      "parsed": {
+        "ciphertext_hex": "6c1623f2edebb4da098d506b39659c9ea05ac47a1699761eabf8fd91a84d7731988781db07780594b3fed5c7",
+        "eph_pub_hex": "e9348220c6b4b2bed85ad6749f073bc02983a027e33640bb2648445533165909",
+        "nonce_hex": "8ff7c90e4838709c8cb06774",
+        "tag_hex": "a7bcf68ef93f89b710aeb415652675dc",
+        "version": 1
+      },
+      "plaintext": "r2r sealed-box vector: plaintext for relay A",
+      "plaintext_hex": "723272207365616c65642d626f7820766563746f723a20706c61696e7465787420666f722072656c61792041",
+      "recipient": "relay_a",
+      "recipient_x25519_pub_hex": "2fa7f3d6a390a0be17f6cffbb139a88c9b37866fe7707dd4d9fd5f3a8cda0d60"
+    },
+    "verify": "Open 'blob' with relay_a's x25519 private key following 'layout' and 'kdf' and compare 'plaintext'; for 'deterministic', rebuild the blob from eph_priv and nonce and compare it byte for byte; every 'negative' case must fail to open."
+  },
+  "signing": {
+    "client_auth_string": {
+      "cases": [
+        {
+          "inputs": {
+            "fingerprint": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+            "nonce": "00112233445566778899aabb",
+            "ts": 1754331000
+          },
+          "sig_b64": "qe05tyPLM6In/VgkaaOxVA0wdFRerw7aZjXUUYf2cJwbm8SAfThdXQFq1L20BtrNuYdz+w3Vz4Gq6uwHHx8pDQ==",
+          "sig_hex": "a9ed39b723cb33a227fd582469a3b1540d3074545eaf0eda6635d45187f6709c1b9bc4807d385d5d016ad4bdb406dacdb98773fb0dd5cf81aaeaec071f1f290d",
+          "signer": "identity_a",
+          "string": "r2r-client-v1\n80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464\n1754331000\n00112233445566778899aabb",
+          "string_hex": "7232722d636c69656e742d76310a383065666639626539303031653732623464353464306439386336636434373561383239363934386536333137306336613935353333666331313362333436340a313735343333313030300a303031313232333334343535363637373838393961616262"
+        },
+        {
+          "inputs": {
+            "fingerprint": "06f080fd2509682e820cbdfd3b10fe45c39d6e16e89fb3e1c31ac71ae65f3b61",
+            "nonce": "00112233445566778899aabb",
+            "ts": 1754331000
+          },
+          "sig_b64": "VNWhTQV1+deh6G5QBBNqbAE0qi5VhE6b2z3dmMgyv0sz2eW29XxMFKZM1NOel9NN7A1OOUpikQh4ldiNY+hrBg==",
+          "sig_hex": "54d5a14d0575f9d7a1e86e5004136a6c0134aa2e55844e9bdb3ddd98c832bf4b33d9e5b6f57c4c14a64cd4d39e97d34dec0d4e394a6291087895d88d63e86b06",
+          "signer": "identity_c",
+          "string": "r2r-client-v1\n06f080fd2509682e820cbdfd3b10fe45c39d6e16e89fb3e1c31ac71ae65f3b61\n1754331000\n00112233445566778899aabb",
+          "string_hex": "7232722d636c69656e742d76310a303666303830666432353039363832653832306362646664336231306665343563333964366531366538396662336531633331616337316165363566336236310a313735343333313030300a303031313232333334343535363637373838393961616262",
+          "whitepaper_ref": "Appendix A.1"
+        }
+      ],
+      "format": "\"r2r-client-v1\\n\" || fingerprint || \"\\n\" || decimal(ts) || \"\\n\" || nonce"
+    },
+    "collect_signing_string": {
+      "format": "\"r2r-collect-v1\\n\" || fingerprint || \"\\n\" || holder || \"\\n\" || scope || \"\\n\" || decimal(ts) || \"\\n\" || nonce",
+      "inputs": {
+        "fingerprint": "06f080fd2509682e820cbdfd3b10fe45c39d6e16e89fb3e1c31ac71ae65f3b61",
+        "holder": "203.0.113.10:8787",
+        "nonce": "00112233445566778899aabb",
+        "scope": "collect-delete",
+        "ts": 1754331000
+      },
+      "sig_b64": "k+XKS9VwmE8txmLhpcPaDy8Stp2sIolaNT/IRjpK6cTG80aI0gu4Q4aU0pBSv1xOlWmMWborYN/okTU3+//jCA==",
+      "sig_hex": "93e5ca4bd570984f2dc662e1a5c3da0f2f12b69dac22895a353fc8463a4ae9c4c6f34688d20bb8438694d29052bf5c4e95698c59ba2b60dfe8913537fbffe308",
+      "signer": "identity_c",
+      "string": "r2r-collect-v1\n06f080fd2509682e820cbdfd3b10fe45c39d6e16e89fb3e1c31ac71ae65f3b61\n203.0.113.10:8787\ncollect-delete\n1754331000\n00112233445566778899aabb",
+      "string_hex": "7232722d636f6c6c6563742d76310a303666303830666432353039363832653832306362646664336231306665343563333964366531366538396662336531633331616337316165363566336236310a3230332e302e3131332e31303a383738370a636f6c6c6563742d64656c6574650a313735343333313030300a303031313232333334343535363637373838393961616262",
+      "whitepaper_ref": "Appendix A.3"
+    },
+    "hello_frames": {
+      "frames": [
+        {
+          "expected": "accept",
+          "frame": {
+            "id": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+            "nonce": "00112233445566778899aabb",
+            "proto": 1,
+            "pubkey": "iojj3XQJ8ZX9UtstPLpdcspnCb8dlBIb83SIAbQPb1w=",
+            "role": "client",
+            "sig": "qe05tyPLM6In/VgkaaOxVA0wdFRerw7aZjXUUYf2cJwbm8SAfThdXQFq1L20BtrNuYdz+w3Vz4Gq6uwHHx8pDQ==",
+            "t": "hello",
+            "ts": 1754331000
+          },
+          "name": "accept",
+          "why": "fingerprint(pubkey) == id and the signature over client_auth_string(id, ts, nonce) verifies"
+        },
+        {
+          "expected": "not_authorised",
+          "frame": {
+            "id": "cc88dccfa4cd33953ec66c376f6ef24a04c4ee4619675cc3450e390a5c30352b",
+            "nonce": "00112233445566778899aabb",
+            "proto": 1,
+            "pubkey": "iojj3XQJ8ZX9UtstPLpdcspnCb8dlBIb83SIAbQPb1w=",
+            "role": "client",
+            "sig": "o3Dys5jApJ8+5wJLXvX0pG4zqTMjcebSQkSS2FDJtpg9+5QddFBObbSBzjcA2PkyS1KuWRC846lw9K6jgMR+BQ==",
+            "t": "hello",
+            "ts": 1754331000
+          },
+          "name": "reject_fingerprint_mismatch",
+          "why": "id is identity_b's fingerprint but pubkey/sig belong to identity_a: the signature itself is valid for the string, yet fingerprint(pubkey) != id, so the relay must refuse"
+        },
+        {
+          "expected": "not_authorised",
+          "frame": {
+            "id": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+            "nonce": "00112233445566778899aabb",
+            "proto": 1,
+            "pubkey": "iojj3XQJ8ZX9UtstPLpdcspnCb8dlBIb83SIAbQPb1w=",
+            "role": "client",
+            "sig": "Vu05tyPLM6In/VgkaaOxVA0wdFRerw7aZjXUUYf2cJwbm8SAfThdXQFq1L20BtrNuYdz+w3Vz4Gq6uwHHx8pDQ==",
+            "t": "hello",
+            "ts": 1754331000
+          },
+          "name": "reject_bad_signature",
+          "why": "first signature byte flipped"
+        },
+        {
+          "expected": "not_authorised",
+          "frame": {
+            "id": "80eff9be9001e72b4d54d0d98c6cd475a8296948e63170c6a95533fc113b3464",
+            "nonce": "short",
+            "proto": 1,
+            "pubkey": "iojj3XQJ8ZX9UtstPLpdcspnCb8dlBIb83SIAbQPb1w=",
+            "role": "client",
+            "sig": "ijYa3Kn+7Jfwll54aCuI0YT2kW4FtVpyH8TU4OyzvrgjpnXvsCwei5w7wU+2BeYvuYrLhym86jzSHwtXLw9BCQ==",
+            "t": "hello",
+            "ts": 1754331000
+          },
+          "name": "reject_short_nonce",
+          "why": "nonce must be 16..64 characters"
+        },
+        {
+          "expected": "bad_field",
+          "frame": {
+            "id": "not-a-fingerprint",
+            "nonce": "00112233445566778899aabb",
+            "proto": 1,
+            "pubkey": "iojj3XQJ8ZX9UtstPLpdcspnCb8dlBIb83SIAbQPb1w=",
+            "role": "client",
+            "sig": "kC9ydFQ1OzWecxgtiVbyIGKUcU3laylow8PUA6E89pNSaFFmduqP6JQU6SPnsxB7Nk4jt0Y/1OVh3k8TZb/RCg==",
+            "t": "hello",
+            "ts": 1754331000
+          },
+          "name": "reject_malformed_id",
+          "why": "id is not 32..128 lowercase hex"
+        }
+      ],
+      "note": "ts is fixed here for determinism. A live relay additionally requires |now - ts| <= 600 s, so to test against a running relay substitute the current time and re-sign. The relay trims and lowercases 'id' before every check; 'ts' must be a JSON integer.",
+      "relay_checks_in_order": [
+        "id (trimmed, lowercased) is a valid fingerprint, else bad_field",
+        "pubkey and sig present, nonce length 16..64, else not_authorised",
+        "|now - ts| <= 600, else not_authorised",
+        "pubkey decodes to 32 bytes and sig decodes, else not_authorised",
+        "fingerprint(pubkey) == id, else not_authorised",
+        "Ed25519 verify(pubkey, client_auth_string(id, ts, nonce), sig), else not_authorised"
+      ]
+    },
+    "hello_signing_string": {
+      "format": "\"r2r-hello-v1\\n\" || node_id || \"\\n\" || advertise || \"\\n\" || decimal(ts) || \"\\n\" || nonce",
+      "inputs": {
+        "advertise": "203.0.113.10:8787",
+        "node_id": "e3331ed6dce0d2adba2dbd8e7605915f",
+        "nonce": "00112233445566778899aabb",
+        "ts": 1754331000
+      },
+      "relay_hello_frame_fields": "t=hello role=relay proto=1 node_id advertise ed25519(b64 pub) x25519(b64 pub) tls ws_port wss_port ts nonce version sig; the receiving relay checks nonce length 16..64, |now-ts| <= window, node_id == node_id_from_ed_pub(ed25519) and the signature over this string",
+      "sig_b64": "akKZzGzU902/jtD3kJg3vsFUqlilyPdtBV7AYr2/6Z3Icc8INsrtf9/R+ArhJygwZUqNYuuSShkBcg248T67AA==",
+      "sig_hex": "6a4299cc6cd4f74dbf8ed0f7909837bec154aa58a5c8f76d055ec062bdbfe99dc871cf0836caed7fdfd1f80ae1272830654a8d62eb924a1901720db8f13ebb00",
+      "signer": "relay_a",
+      "string": "r2r-hello-v1\ne3331ed6dce0d2adba2dbd8e7605915f\n203.0.113.10:8787\n1754331000\n00112233445566778899aabb",
+      "string_hex": "7232722d68656c6c6f2d76310a65333333316564366463653064326164626132646264386537363035393135660a3230332e302e3131332e31303a383738370a313735343333313030300a303031313232333334343535363637373838393961616262",
+      "whitepaper_ref": "Appendix A.3"
+    },
+    "pointer_signing_string": {
+      "format": "\"r2r-pointer-v1\\n\" || fingerprint || \"\\n\" || address || \"\\n\" || decimal(ts)  (no nonce)",
+      "inputs": {
+        "address": "203.0.113.10:8787",
+        "fingerprint": "06f080fd2509682e820cbdfd3b10fe45c39d6e16e89fb3e1c31ac71ae65f3b61",
+        "ts": 1754331000
+      },
+      "sig_b64": "OGU6MCys9S2WqI5RyVJCwEnKfnbIyzlNw9ogieS+xChwA448ERyJLQIlE37DKs48qlSAS1Qx754Z13cQV1AICA==",
+      "sig_hex": "38653a302cacf52d96a88e51c95242c049ca7e76c8cb394dc3da2089e4bec42870038e3c111c892d0225137ec32ace3caa54804b5431ef9e19d7771057500808",
+      "signer": "relay_a",
+      "string": "r2r-pointer-v1\n06f080fd2509682e820cbdfd3b10fe45c39d6e16e89fb3e1c31ac71ae65f3b61\n203.0.113.10:8787\n1754331000",
+      "string_hex": "7232722d706f696e7465722d76310a303666303830666432353039363832653832306362646664336231306665343563333964366531366538396662336531633331616337316165363566336236310a3230332e302e3131332e31303a383738370a31373534333331303030",
+      "whitepaper_ref": "Appendix A.3"
+    },
+    "signer_seeds": {
+      "identity_a": "0101010101010101010101010101010101010101010101010101010101010101",
+      "identity_b": "0202020202020202020202020202020202020202020202020202020202020202",
+      "identity_c": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "relay_a": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"
+    },
+    "verify": "Build each 'string' from its 'inputs' byte for byte (JSON-escaped here; '\\n' is 0x0a, no trailing newline), sign it with RFC 8032 Ed25519 under 'signer' seed and compare 'sig_b64' exactly (Ed25519 is deterministic); verify each hello frame as the relay would and compare 'expected'.",
+    "x_r2r_auth_header": {
+      "header_value": "eyJpZCI6IjA2ZjA4MGZkMjUwOTY4MmU4MjBjYmRmZDNiMTBmZTQ1YzM5ZDZlMTZlODlmYjNlMWMzMWFjNzFhZTY1ZjNiNjEiLCJwdWJrZXkiOiJBNkVIdi9QT0VMNGRjTjBZNTB2QW1XZmsxakNicFExZkhkeUdaQkpWTWJnPSIsInRzIjoxNzU0MzMxMDAwLCJub25jZSI6IjAwMTEyMjMzNDQ1NTY2Nzc4ODk5YWFiYiIsInNpZyI6IlZOV2hUUVYxK2RlaDZHNVFCQk5xYkFFMHFpNVZoRTZiMnozZG1NZ3l2MHN6MmVXMjlYeE1GS1pNMU5PZWw5Tk43QTFPT1VwaWtRaDRsZGlOWStockJnPT0ifQ==",
+      "note": "base64(compact JSON of the same proof object); decoded JSON <= 4096 bytes",
+      "proof_json": "{\"id\":\"06f080fd2509682e820cbdfd3b10fe45c39d6e16e89fb3e1c31ac71ae65f3b61\",\"pubkey\":\"A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=\",\"ts\":1754331000,\"nonce\":\"00112233445566778899aabb\",\"sig\":\"VNWhTQV1+deh6G5QBBNqbAE0qi5VhE6b2z3dmMgyv0sz2eW29XxMFKZM1NOel9NN7A1OOUpikQh4ldiNY+hrBg==\"}",
+      "whitepaper_ref": "Appendix A.1"
+    }
+  }
+}

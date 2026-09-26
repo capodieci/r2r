@@ -1,0 +1,259 @@
+{
+  "built_at": "2026-09-24T22:31:48Z",
+  "files": {
+    "HANDOFF.md": {
+      "sha256": "4c68000572b8e567568a8eef00b532da0f917b8cf0012ae088dafbafff9439bd",
+      "size": 16835
+    },
+    "assets/favicon.ico": {
+      "sha256": "af981a0477048d6fceba46e2bd7515539288df801bd2addbc256a044320cbe58",
+      "size": 1677
+    },
+    "assets/favicon.svg": {
+      "sha256": "9d11e6fcc289ab6505cf8c408b333bda623b119936225f60a093d423a4a9c49a",
+      "size": 930
+    },
+    "assets/js/card.js": {
+      "sha256": "76d1e2047a0736b20a39a76f6aed8a1840849e2b7dbddacf4315b734c2811df4",
+      "size": 8540
+    },
+    "assets/js/qrcode.min.js": {
+      "sha256": "7ce71906192b4a8bb2601599413a8740e9666c99486010fd42cf2a521cd02ff7",
+      "size": 19928
+    },
+    "assets/sippis-logo.svg": {
+      "sha256": "c98767f95ee006bea8adc922aee752e6c38a9e5663a9122d92931a309f608c41",
+      "size": 53694
+    },
+    "assets/sippis-shell.css": {
+      "sha256": "4964d2e93476e342551c1429ad2623ad564167fba860653281f9b4052095cba1",
+      "size": 17849
+    },
+    "i18n/ar.json": {
+      "sha256": "029e8ce12862a47f79cca7713b8fe99d5ae93770dbd3a25c570d55fcba679e3a",
+      "size": 58715
+    },
+    "i18n/bg.json": {
+      "sha256": "fec74e2992d03a1e3b44068217119610c6c59607f0f8fe675e197c4312cef9bd",
+      "size": 69593
+    },
+    "i18n/bn.json": {
+      "sha256": "47b7f804e7d1c40012b865b8e5cc34e49a889525297d0ab3ce834405b3e1c350",
+      "size": 87449
+    },
+    "i18n/cs.json": {
+      "sha256": "534d0d66c459d3447e5e33f983eeb181b6a16f3605ee5ca1368d16aa8156b0d1",
+      "size": 46291
+    },
+    "i18n/da.json": {
+      "sha256": "5890f117df45617b1fa0b8ed70d7aa6cbc9fe166b52e61b00b0a4d28d7d9906e",
+      "size": 44261
+    },
+    "i18n/de.json": {
+      "sha256": "6de1f1fb51a687202661bd4e205d6aa833a64f8284dd6efe3a48dbbff1fc6ee4",
+      "size": 47938
+    },
+    "i18n/el.json": {
+      "sha256": "59bd2fd7df46a7f676cb65fb10148a80f7f70ad29167e90ebbe8d9104b056778",
+      "size": 77058
+    },
+    "i18n/en.json": {
+      "sha256": "51bb7c8dfdb2c85de68e5f47626316b77d8552760c2430ee1d99cf933a2d5a76",
+      "size": 44158
+    },
+    "i18n/es.json": {
+      "sha256": "a3ac986ff87d95ca4fa0557aca1a8ba5ce54906d98fc1a43a3eb9d27d6c64b80",
+      "size": 46794
+    },
+    "i18n/fa.json": {
+      "sha256": "0f5a43d6f01e589fcde7c8582c386962b53cbc9e5c581641050096d3ef2608a2",
+      "size": 66983
+    },
+    "i18n/fi.json": {
+      "sha256": "84a94cc6bcfb7fbf90a4549ff01f2580b3816b87e69ec26dee10d0cd52c78670",
+      "size": 48285
+    },
+    "i18n/fil.json": {
+      "sha256": "1d7c94267bc5d2be30aa3a0da93efd38044713c216615bdc3872870d687381ad",
+      "size": 48284
+    },
+    "i18n/fr.json": {
+      "sha256": "ceb57b5e880c56dbeda2606a508c0d76cb61d42bee08e15a0469e231bdbf8281",
+      "size": 49087
+    },
+    "i18n/he.json": {
+      "sha256": "1aab90746652c1ac6d695ec865e123a81bfaa4c6cb7af89291a5d6d948f42583",
+      "size": 55363
+    },
+    "i18n/hi.json": {
+      "sha256": "4cc7d3c19f67a5a6ac069d7ff378d001261ad532d6190016a82b80ba66ee353e",
+      "size": 86007
+    },
+    "i18n/hr.json": {
+      "sha256": "30b2d1f95899bee9852fcef9ea3f26a19a5d5dfc8c232a4bd29a65aa8d9f4a5e",
+      "size": 45186
+    },
+    "i18n/hu.json": {
+      "sha256": "99b761e0b78e0ac437174d40ff5bcdae4fc3209513b45bc4a3500eba9a6b5fb3",
+      "size": 49641
+    },
+    "i18n/id.json": {
+      "sha256": "464db782f8ceb5d50c2870ea80472df2acba3f67c581c0b2c228ee96683c95c4",
+      "size": 45649
+    },
+    "i18n/it.json": {
+      "sha256": "a8650a64650bcfed8a0b11e69d0c078cd448c402d784dfc862a696d3b0f28fd3",
+      "size": 46250
+    },
+    "i18n/ja.json": {
+      "sha256": "873cc2e4c958ad71c7a0e32fca28ba1fb0aac081bf793c8316325638bba7b116",
+      "size": 56369
+    },
+    "i18n/ko.json": {
+      "sha256": "b7f6d1f9a576e7cb1eb903929ca28fb3607b3a9676c20f21a78c8ba4462aa2bb",
+      "size": 51762
+    },
+    "i18n/languages.json": {
+      "sha256": "e5c44756b17bde119f325047008be494ab0df52c9fd86790956eccad4ad053b3",
+      "size": 3064
+    },
+    "i18n/ms.json": {
+      "sha256": "553c23874d2679ad334f469f2255604df7ab5f8a34a689462fa8dc527e844cc5",
+      "size": 46642
+    },
+    "i18n/nl.json": {
+      "sha256": "9e949a618399d34d090ba74670884d0da4e30134c7d89c13e9aac00e6a31a4e1",
+      "size": 45622
+    },
+    "i18n/no.json": {
+      "sha256": "d74392a4676ebbd6e064bc5934f4a0cb9ba7dfa84018745c27c63d4f5d06173c",
+      "size": 44399
+    },
+    "i18n/pl.json": {
+      "sha256": "d8713cfdb48379ebd801ff25ed6784546e67fdebff1009ca154f76cf7306854c",
+      "size": 47869
+    },
+    "i18n/pt.json": {
+      "sha256": "3fe3a4c6c2a0f32bf2ba4336619619018b4deeab059c682257a6f9df1c4119f5",
+      "size": 46835
+    },
+    "i18n/ro.json": {
+      "sha256": "7c2f2298970c3e6cb0903dd2b95a9b760966d6d1a8427660b1221fee76d2e5e6",
+      "size": 47975
+    },
+    "i18n/ru.json": {
+      "sha256": "5afe09834c26189506f6fdbf4c444c1c81cfc3df54c46df0c937c25e562fc47f",
+      "size": 71842
+    },
+    "i18n/sk.json": {
+      "sha256": "eb4bd092303d83b238964d22adeef8358b8308c9a1e592ed06959fcd7ea43a7b",
+      "size": 46467
+    },
+    "i18n/sv.json": {
+      "sha256": "2f4451ea30399760ea9a269ad455be6d529511c6107f39316b032f2b69dab06a",
+      "size": 45164
+    },
+    "i18n/sw.json": {
+      "sha256": "87c39196083c3188d2175641e290e158922a19f00983c1f85b46be5d78f0b6f2",
+      "size": 46108
+    },
+    "i18n/th.json": {
+      "sha256": "b1524e287a0eba98af66892033679eb5b8d229f3d28b8f7eda83be6c0c040491",
+      "size": 88584
+    },
+    "i18n/tr.json": {
+      "sha256": "e8f293e4cc6276cda2228a6db753b3e2efb0c54ea79b4e8b95789c381c11d0b8",
+      "size": 47594
+    },
+    "i18n/uk.json": {
+      "sha256": "b1c19dceba28d564597892b59a66d9dbabdea589946a79fb6b2001a8090a1e60",
+      "size": 71251
+    },
+    "i18n/ur.json": {
+      "sha256": "66740a12e22cf5d7dbd1a6be61e5d1d4c7b56b83a02ac2fa07dc4a6e07047aa8",
+      "size": 65150
+    },
+    "i18n/vi.json": {
+      "sha256": "d5a54670ca051fe694d25642105b130be5e93287bdeffef7a4707a8570aabfd3",
+      "size": 53673
+    },
+    "i18n/zh.json": {
+      "sha256": "96e420e02186ee935c37b17277757671a0466ed3d03c6bd689cbdc0c4918fcc3",
+      "size": 43106
+    },
+    "partials/mesh.php.inline": {
+      "sha256": "c2f076ff94c813f7282373971b0f64e8501c4c43d267db42e431bf8dff6f268c",
+      "size": 8058
+    },
+    "ref-php/admin.php": {
+      "sha256": "45fb48d56d9aa03f26b3304556d0b990dc17f79ba111d0ed92815e6273dcf629",
+      "size": 15156
+    },
+    "ref-php/auth/_topbar.php": {
+      "sha256": "b44477d3d96fffca922278a7159d6538e376e1aa97c753adf7a184a2f4fb4d0d",
+      "size": 8263
+    },
+    "ref-php/card.php": {
+      "sha256": "589b164a76c8eda2d220373d8403d874fd20aab1dfe2664abf11b8b2b0561438",
+      "size": 2494
+    },
+    "ref-php/lib/_docs_foot.php": {
+      "sha256": "d327212dfbf23b1567799a88e797e3fac242b2fa3e443dc8bfdb6cf61e8a8f05",
+      "size": 740
+    },
+    "ref-php/lib/_docs_head.php": {
+      "sha256": "e2af90471fc2d842cf05904915f06eacf27c5be15ade0f16a4c7bd58ae43c0f5",
+      "size": 8967
+    },
+    "ref-php/lib/_mesh.php": {
+      "sha256": "c2f076ff94c813f7282373971b0f64e8501c4c43d267db42e431bf8dff6f268c",
+      "size": 8058
+    },
+    "ref-php/lib/card.php": {
+      "sha256": "daf0e6eb2a23de3430418302a1ff61d89e610e67c1a5f8f215fa6dbd6e2115e0",
+      "size": 8179
+    },
+    "ref-php/m.php": {
+      "sha256": "6fc0ac36413d959510f3bf5ac857a298be802df25e3cd1e009951614394bc007",
+      "size": 5407
+    },
+    "ref-php/redeem.php": {
+      "sha256": "797fbc51c31d199858c5e0b1582dea9f8059c42d7b69bc183bbfdfadc9ffe3b6",
+      "size": 12547
+    },
+    "templates/en/downloads.html": {
+      "sha256": "27eee2fd73bf9c46f83b94d97e4e3f3b7e30bf7798b86ee18b8008246cf111ac",
+      "size": 34004
+    },
+    "templates/en/faq.html": {
+      "sha256": "4582e0e516aae728f03e7c71f0a90455601bca359f29f886aab908825f38fcaf",
+      "size": 23409
+    },
+    "templates/en/homes.html": {
+      "sha256": "a6f500b7eb252233bf2a9c1fb1ec709d79ed069a283514a8373543b77c053d3c",
+      "size": 24897
+    },
+    "templates/en/index.html": {
+      "sha256": "1fd1298b5591351a4666279d708de05b43b968b3b12a0ff0302454e622d69ada",
+      "size": 40563
+    },
+    "templates/en/network.html": {
+      "sha256": "73120b2824d78320d22f29a55036539ee1542b836223c113366645fac1abfea8",
+      "size": 31732
+    },
+    "templates/en/paper.html": {
+      "sha256": "8ccddea3479a2b7a57a3d274771754a705c846d603983108aa469b1796aaf099",
+      "size": 266344
+    },
+    "templates/en/privacy.html": {
+      "sha256": "94e808ee393c6025dee6d3d64306efd04bdbdcb8f20fd684f03804c55fd6ffe2",
+      "size": 24112
+    },
+    "templates/en/run-a-relay.html": {
+      "sha256": "39d47cd4c3c1ac5f4e8c6e6c3e4ab035e47799bce4b08e9fa9ebf90160708722",
+      "size": 34857
+    }
+  },
+  "source": "r2r-relay repo, web/doorway (scripts/build-doorway-bundle.py)",
+  "version": "1.1.0"
+}

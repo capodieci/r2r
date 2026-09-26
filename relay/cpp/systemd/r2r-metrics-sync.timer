@@ -1,0 +1,16 @@
+[Unit]
+Description=Sync R2R relay metrics into MariaDB every minute
+Documentation=file:///usr/local/share/doc/r2r-relay/README.md
+
+[Timer]
+# First run shortly after boot, then once a minute. A timer rather than a
+# long-lived daemon: a failed poll cannot wedge the sync loop, and each run is
+# independently visible in the journal.
+OnBootSec=45s
+OnUnitActiveSec=60s
+AccuracySec=5s
+Persistent=false
+Unit=r2r-metrics-sync.service
+
+[Install]
+WantedBy=timers.target
