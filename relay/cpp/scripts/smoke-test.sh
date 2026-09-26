@@ -257,6 +257,8 @@ check "ICE servers offered"          "stun:"    \
     "$($PROBE --url ws://127.0.0.1:$A_WS --key "$WORK/alice.key" ice 2>&1)"
 check "an absent peer reads offline" "offline"  \
     "$($PROBE --url ws://127.0.0.1:$A_WS --key "$WORK/alice.key" watch "$BOBLOCAL" 2>&1)"
+check "anonymous watch is refused"    "not_authorised" \
+    "$($PROBE --url ws://127.0.0.1:$A_WS --anonymous frame "{\"t\":\"watch\",\"ids\":[\"$BOBLOCAL\"]}" presence 2>&1)"
 $PROBE --url ws://127.0.0.1:$A_WS --key "$WORK/boblocal.key" listen 9 > "$WORK/listen.out" 2>/dev/null &
 LISTEN_PID=$!
 sleep 2
@@ -340,6 +342,17 @@ if [ "$FRAMES" -lt 500 ]; then ok "no frame storm (A saw $FRAMES frames)";
 else bad "no frame storm" "A saw $FRAMES frames -- a reply loop is likely"; fi
 
 echo
+echo "Relay-only frames from a client"
+# Before 1.0.2 these two frames deadlocked the relay (the refusal was sent
+# while the hub lock was held). They must be refused, and the relay must
+# still be there afterwards.
+check "client pointer is refused"      "not_authorised" \
+    "$($PROBE --url ws://127.0.0.1:$A_WS --key "$WORK/alice.key" frame '{"t":"pointer","fp":"'$ALICE'"}' pointer 2>&1)"
+check "client collect is refused"      "not_authorised" \
+    "$($PROBE --url ws://127.0.0.1:$A_WS --key "$WORK/alice.key" frame '{"t":"collect","fp":"'$ALICE'"}' collect 2>&1)"
+check "relay still answers"            '"ok"' "$(curl -s -m 5 http://127.0.0.1:$A_WS/health)"
+
+echo
 echo "Peer table hygiene"
 # Anyone with a key may join as a relay; nobody may steer this relay's dials by
 # merely claiming to be one. The rogue advertises a port nothing listens on and
@@ -362,6 +375,18 @@ check "the claimed address is verified by dialling it" "verifying $ROGUE_ADV" \
 check "the offered addresses are never dialled" "none" \
     "$(grep -qE "dialling peer ws://($INJECT_1|$INJECT_2)|verifying ($INJECT_1|$INJECT_2)" \
         "$WORK/a/relay.log" 2>/dev/null && echo dialled || echo none)"
+# A self-signed relay may not plant mail pointers either: a forged pointer for
+# a connected identity must not reach that identity or A's locate table.
+$PROBE --url ws://127.0.0.1:$A_WS --key "$WORK/boblocal.key" listen 6 > "$WORK/listen2.out" 2>/dev/null &
+LISTEN2_PID=$!
+sleep 1
+ROGUE2=$($PROBE --url ws://127.0.0.1:$A_WS rogue "$ROGUE_ADV" "$INJECT_1" "$BOBLOCAL" 2>&1)
+check "rogue pointer is offered"       "pointer sent"   "$ROGUE2"
+check "forged pointer is dropped"      "dropped"        \
+    "$(grep -h "pointer .*$ROGUE_ADV\|pointer from an unverified relay" "$WORK/a/relay.log" 2>/dev/null | tail -1)"
+wait "$LISTEN2_PID" 2>/dev/null
+check "victim hears no mail_at"        "none"           \
+    "$(grep -q "MAIL_AT\|mail_at" "$WORK/listen2.out" 2>/dev/null && echo pushed || echo none)"
 # Without --allow-private-peers, loopback and private ranges are refused
 # everywhere an address can come from: peers.json, a hello, gossip.
 D_WS=20787
@@ -384,11 +409,17 @@ echo "Storage market"
 # to the relay, so a zero signature of the right shape is enough here.
 C_WS=8797
 MK_PAYOUT=0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-MK_PAYKEY=0xcccccccccccccccccccccccccccccccccccccccc
-MK_SIG=0x$(printf '0%.0s' $(seq 1 130))
+MK_VAULT=0x1111111111111111111111111111111111111111
+MK_CHAIN=8453
+# The white paper's A.13 payment key; the address below is derived from it.
+MK_PRIV=4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318
+MK_PAYKEY=0x2c7536e3605d9c16a7a3d7b1898e529396a65c23
+# What a bad wallet (or an attacker) sends: right shape, no valid signature.
+MK_GARBAGE=0x$(printf 'ab%.0s' $(seq 1 65))
 mkdir -p "$WORK/c"
 "$RELAY" --data-dir "$WORK/c" --ws-port "$C_WS" --open-registration \
     --pool-market-mb 2 --market-price 500000 --payout-address "$MK_PAYOUT" \
+    --vault-address "$MK_VAULT" --chain-id "$MK_CHAIN" \
     --log-level debug > "$WORK/c/relay.log" 2>&1 &
 C_PID=$!
 wait_for_health "$C_WS"
@@ -400,10 +431,25 @@ MK_RENTAL=$(printf '%s' "$RENT_OUT" | sed -n 's/.*"rental": "\([0-9a-f-]*\)".*/\
 [ -z "$MK_RENTAL" ] && MK_RENTAL=$(printf '%s' "$RENT_OUT" | tr -d ' \n' | sed -n 's/.*"rental":"\([0-9a-f-]*\)".*/\1/p')
 check "second rent cannot oversell"   'market_full' \
     "$($MPROBE frame "{\"t\":\"rent\",\"bytes\":1100000,\"payment_key\":\"$MK_PAYKEY\"}" rent_ok 2>&1)"
-check "voucher extends the rental"    '"t": "voucher_ok"' \
+# The relay recovers the signer of every voucher (white paper §14.4). A.13's
+# published signature must recover to A.13's address; garbage must not buy
+# storage; a voucher signed by the rental's own key must.
+check "A.13 voucher recovers its signer" "signer $MK_PAYKEY" \
+    "$($PROBE voucher-check "$MK_VAULT" "$MK_CHAIN" 0x2222222222222222222222222222222222222222 489 \
+        0x4db3024afb2fdce238d7b2823f59014464c614621c190f98861a38829f8508bb5a868b971f2f5da04310cf7fde8b95c383664fb96420361654d77758ea000d901c 2>&1)"
+check "garbage signature is refused"  'does not match the payment key' \
+    "$($MPROBE frame "{\"t\":\"voucher\",\"rental\":\"$MK_RENTAL\",\"payment_key\":\"$MK_PAYKEY\",\"payout\":\"$MK_PAYOUT\",\"cumulative_micro\":699,\"sig\":\"$MK_GARBAGE\"}" voucher_ok 2>&1)"
+check "garbage bought no time"        '"paid_until"' \
+    "$(curl -s http://127.0.0.1:$C_WS/status.json | grep -c paid_until | sed 's/^0$/"paid_until" absent as expected/; s/^[1-9].*/"paid_until"/')"
+MK_SIG=$($PROBE voucher-sign "$MK_PRIV" "$MK_VAULT" "$MK_CHAIN" "$MK_PAYOUT" 699 2>/dev/null | sed -n 's/^sig //p')
+check "voucher signs with the A.13 key" "0x" "$MK_SIG"
+check "valid voucher extends the rental" '"t": "voucher_ok"' \
     "$($MPROBE frame "{\"t\":\"voucher\",\"rental\":\"$MK_RENTAL\",\"payment_key\":\"$MK_PAYKEY\",\"payout\":\"$MK_PAYOUT\",\"cumulative_micro\":699,\"sig\":\"$MK_SIG\"}" voucher_ok 2>&1)"
 check "replayed voucher refused"      'must exceed the previous' \
     "$($MPROBE frame "{\"t\":\"voucher\",\"rental\":\"$MK_RENTAL\",\"payment_key\":\"$MK_PAYKEY\",\"payout\":\"$MK_PAYOUT\",\"cumulative_micro\":699,\"sig\":\"$MK_SIG\"}" voucher_ok 2>&1)"
+MK_SIG2=$($PROBE voucher-sign "$MK_PRIV" "$MK_VAULT" "$MK_CHAIN" "$MK_PAYOUT" 1398 2>/dev/null | sed -n 's/^sig //p')
+check "voucher for another key refused" 'not the one this rental' \
+    "$($MPROBE frame "{\"t\":\"voucher\",\"rental\":\"$MK_RENTAL\",\"payment_key\":\"0xcccccccccccccccccccccccccccccccccccccccc\",\"payout\":\"$MK_PAYOUT\",\"cumulative_micro\":1398,\"sig\":\"$MK_SIG2\"}" voucher_ok 2>&1)"
 check "status.json shows the market"  '"committed_bytes": 1500000' \
     "$(curl -s http://127.0.0.1:$C_WS/status.json)"
 kill "$C_PID" 2>/dev/null; wait "$C_PID" 2>/dev/null

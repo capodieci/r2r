@@ -265,6 +265,7 @@ usual place for them. `r2r-relay --help` prints the full list.
 | `--data-dir` | `/var/lib/r2r` | Holds `peers.json`, `r2r.db`, `node.key`. |
 | `--ttl-days` | 7 | Dead-drop retention. |
 | `--peer-dial-target` | 8 | Outbound relay links to maintain. |
+| `--vault-address 0x…` | *(none)* | The settlement contract. Required to sell storage: vouchers are verified against it and refused without it. |
 | `--allow-private-peers` | off | Accept and dial peers on loopback, private and link-local ranges. For test benches only; a public relay must never be told to dial its own network. Env `R2R_ALLOW_PRIVATE_PEERS=1`. |
 | `--max-payload` | 262144 | Largest single payload, in bytes. |
 | `--assets PATH` | *(none)* | Publish a directory under `GET /assets/`. |

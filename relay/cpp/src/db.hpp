@@ -323,8 +323,8 @@ public:
     // Marks overdue rentals lapsed; returns how many changed.
     int rentals_lapse(std::int64_t now);
 
-    // Settlement vouchers, stored verbatim for the operator to redeem. The
-    // relay never verifies the chain signature -- the contract does.
+    // Settlement vouchers, stored verbatim for the operator to redeem, after
+    // Hub::handle_voucher has recovered the signer and matched the rental.
     // Returns false when this cumulative does not exceed the highest voucher
     // already held for (payment_key, payout); `out_prev` gets that maximum.
     bool voucher_store(const std::string& payment_key, const std::string& payout,

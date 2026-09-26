@@ -72,6 +72,15 @@ when they are wrong — only the network does.
   private ranges. The pin is set by that dial, not by the inbound hello, and
   a key learned from gossip is a hint that must never reject anyone. Seed
   entries are never pruned. (§11.2–11.4.)
+- **Pointers and presence are gated.** A pointer is accepted only from a
+  verified relay session and only about a holder your relay has verified at
+  that exact address with that exact key; `watch` answers only sessions that
+  proved an identity. (§9.5, §7.11.)
+- **Vouchers are verified, not just stored.** Recover the secp256k1 signer of
+  every voucher over the §14.4 digest (Keccak-256, EIP-191 prefix, low-s) and
+  require it to be the rental's payment key before extending `paid_until`.
+  `protocol-vectors.json` has a known-answer voucher; the reference probe's
+  `voucher-sign` and `voucher-check` commands produce and check them.
 - **Onion silence.** A relay that accepts a layer sends nothing back. Only
   failures travel back. The layer's tag covers the whole slot header, so
   slots cannot be reordered or dropped.

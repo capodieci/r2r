@@ -928,12 +928,12 @@
       "json": "key order is never significant; the reference emits keys sorted alphabetically",
       "strings": "UTF-8; '\\n' inside a signing string is the single byte 0x0a; no trailing newline"
     },
-    "generated_by": "tools/protocol-vectors.cpp (r2r-relay 1.0.0)",
+    "generated_by": "tools/protocol-vectors.cpp (r2r-relay 1.0.2)",
     "openssl_version": "OpenSSL 3.5.5 27 Jan 2026",
     "purpose": "Known-answer vectors so that a re-implementation of the R2R relay in another language can prove byte-exact compatibility with the reference C++ relay's cryptography, canonical strings and encodings before it ever talks to the network.",
     "regenerate": "cmake -S . -B build -DR2R_BUILD_VECTORS=ON && cmake --build build --target r2r-vectors && ./build/r2r-vectors > docs/protocol-vectors.json",
     "stability": "Every value is a function of the fixed inputs in the source. Blobs from randomised primitives (sealed boxes) were generated once and embedded as constants; the generator opens them with the public API on every run, and two runs print identical documents.",
-    "whitepaper": "docs/R2R-WHITEPAPER.md sections 3 (conventions), 4 (identities), 10 (onion) and Appendix A. Values marked whitepaper_ref reproduce Appendix A and are asserted by the generator."
+    "whitepaper": "protocol/R2R-WHITEPAPER.md sections 3 (conventions), 4 (identities), 10 (onion) and Appendix A. Values marked whitepaper_ref reproduce Appendix A and are asserted by the generator."
   },
   "multi_recipient_layer": {
     "aad": "the header: 0x02 || n || all n slots (2 + 93n bytes)",
@@ -1495,5 +1495,26 @@
       "proof_json": "{\"id\":\"06f080fd2509682e820cbdfd3b10fe45c39d6e16e89fb3e1c31ac71ae65f3b61\",\"pubkey\":\"A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=\",\"ts\":1754331000,\"nonce\":\"00112233445566778899aabb\",\"sig\":\"VNWhTQV1+deh6G5QBBNqbAE0qi5VhE6b2z3dmMgyv0sz2eW29XxMFKZM1NOel9NN7A1OOUpikQh4ldiNY+hrBg==\"}",
       "whitepaper_ref": "Appendix A.1"
     }
+  },
+  "storage_voucher": {
+    "doc": "White paper §14.4 and A.13. Keccak-256 uses the original Keccak padding (0x01), not SHA3-256 (0x06). The relay rebuilds the digest from its own vault address, chain id and payout address, recovers the secp256k1 signer (v in {27,28} or {0,1}; s must be <= n/2; the recovered address must be non-zero) and requires it to equal the rental's payment key.",
+    "eip191_digest_hex": "f0d640408151a1102807a4a6af40553010d74e182c6aa0c3c5b3cdc46fe96bf8",
+    "inner_keccak256_hex": "e4162b4e96a99274413055ab991501f0d55e2d4afa94471faf0e6b269966bac0",
+    "inputs": {
+      "chain_id": 8453,
+      "cumulative_micro": 489,
+      "payee": "0x2222222222222222222222222222222222222222",
+      "payment_key": "0x2c7536e3605d9c16a7a3d7b1898e529396a65c23",
+      "payment_private_key": "4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318",
+      "vault": "0x1111111111111111111111111111111111111111"
+    },
+    "notes": [
+      "inner = keccak256(\"r2r-voucher-v1\" || vault[20] || uint256_be(chain_id) || payee[20] || uint256_be(cumulative))",
+      "digest = keccak256(\"\\x19Ethereum Signed Message:\\n32\" || inner)",
+      "sig = r[32] || s[32] || v[1] as 0x + 130 hex; the relay lowercases it before decoding",
+      "address = 0x + hex(keccak256(X[32] || Y[32])[12..32]) of the uncompressed public key"
+    ],
+    "recovered_address": "0x2c7536e3605d9c16a7a3d7b1898e529396a65c23",
+    "sig": "0x4db3024afb2fdce238d7b2823f59014464c614621c190f98861a38829f8508bb5a868b971f2f5da04310cf7fde8b95c383664fb96420361654d77758ea000d901c"
   }
 }

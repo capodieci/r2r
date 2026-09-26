@@ -466,8 +466,8 @@
 <aside class="paper-side" id="sidebar" aria-label="Contents">
   <div class="side-head">
     <span class="side-kicker">White paper · protocol specification</span>
-    <a class="side-dl" href="{{BASE}}/assets/R2R-WHITEPAPER.pdf" download="R2R-WHITEPAPER.pdf"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v9m0 0l-3-3m3 3l3-3"/><path d="M2 12v1a2 2 0 002 2h8a2 2 0 002-2v-1"/></svg> Download PDF <small>434 KB</small></a>
-    <a class="side-dl alt" href="{{BASE}}/assets/R2R-WHITEPAPER.md" download="R2R-WHITEPAPER.md"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v9m0 0l-3-3m3 3l3-3"/><path d="M2 12v1a2 2 0 002 2h8a2 2 0 002-2v-1"/></svg> Markdown source <small>159 KB</small></a>
+    <a class="side-dl" href="{{BASE}}/assets/R2R-WHITEPAPER.pdf" download="R2R-WHITEPAPER.pdf"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v9m0 0l-3-3m3 3l3-3"/><path d="M2 12v1a2 2 0 002 2h8a2 2 0 002-2v-1"/></svg> Download PDF <small>438 KB</small></a>
+    <a class="side-dl alt" href="{{BASE}}/assets/R2R-WHITEPAPER.md" download="R2R-WHITEPAPER.md"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v9m0 0l-3-3m3 3l3-3"/><path d="M2 12v1a2 2 0 002 2h8a2 2 0 002-2v-1"/></svg> Markdown source <small>161 KB</small></a>
     <label class="side-verify" id="sideVerify" title="Check a downloaded copy against the hashes this relay serves">
       <b>Verify a download</b><br>drop the PDF or .md here, or click
       <input type="file" id="sideVerifyInput">
@@ -638,11 +638,11 @@
   <p class="hero-sub">The complete white paper: wallet, vault and setup cards, the wire protocol, dead-drop storage, onion routing, the relay mesh, the invite tree and the storage market. Written to the byte level so a second implementation can interoperate.</p>
   <div class="hero-meta"><span>26 September 2026</span><span>20 sections + 3 appendices</span><span>Test vectors checked against the reference code</span></div>
   <div class="hero-actions">
-    <a class="btn" href="{{BASE}}/assets/R2R-WHITEPAPER.pdf" download="R2R-WHITEPAPER.pdf"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v9m0 0l-3-3m3 3l3-3"/><path d="M2 12v1a2 2 0 002 2h8a2 2 0 002-2v-1"/></svg> Download PDF <small>434 KB</small></a>
+    <a class="btn" href="{{BASE}}/assets/R2R-WHITEPAPER.pdf" download="R2R-WHITEPAPER.pdf"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v9m0 0l-3-3m3 3l3-3"/><path d="M2 12v1a2 2 0 002 2h8a2 2 0 002-2v-1"/></svg> Download PDF <small>438 KB</small></a>
     <a class="cta" href="{{BASE}}/assets/R2R-WHITEPAPER.md" download="R2R-WHITEPAPER.md">Markdown source</a>
     <a class="cta" href="#abstract">Read it here</a>
   </div>
-  <p class="hero-spec"><strong>Protocol:</strong> R2R v2 (wire <code>proto</code> field: <code>1</code>) · <strong>Reference relay:</strong> <code>r2r-relay</code> 1.0.1 (C++20) · <strong>Reference client:</strong> the R-2-Я wallet (single-file HTML/JS) · <strong>Document date:</strong> 26 September 2026 (this revision: peer-table verification rules in §11, relay 1.0.1; 23 September: wallet onion routing, relay input hardening, invite activation, new seed network, onion v2 with standby relays, scrypt key derivation)</p>
+  <p class="hero-spec"><strong>Protocol:</strong> R2R v2 (wire <code>proto</code> field: <code>1</code>) · <strong>Reference relay:</strong> <code>r2r-relay</code> 1.0.2 (C++20) · <strong>Reference client:</strong> the R-2-Я wallet (single-file HTML/JS) · <strong>Document date:</strong> 26 September 2026 (this revision: voucher signature verification in §14.4, pointer and presence rules in §9.5 and §7.11, relay 1.0.2; earlier the same day: peer-table verification rules in §11, relay 1.0.1; 23 September: wallet onion routing, relay input hardening, invite activation, new seed network, onion v2 with standby relays, scrypt key derivation)</p>
 </div>
 
 <div class="keywords"><span>End-to-end encryption</span><span>Ed25519</span><span>X25519</span><span>AES-256-GCM</span><span>Onion routing</span><span>Dead drops</span><span>Relay mesh</span><span>Invite tree</span><span>Storage market</span><span>WebSocket</span><span>SQLite</span><span>scrypt</span><span>USDC vouchers</span></div>
@@ -1521,7 +1521,7 @@ locator      = Ed25519 key pair from locatorSeed; its fingerprint is an ordinary
 → { &quot;t&quot;:&quot;presence&quot;, &quot;id&quot;:&quot;&lt;fp&gt;&quot;, &quot;state&quot;:&quot;online&quot;|&quot;away&quot;|&quot;offline&quot;, &quot;seen&quot;:&lt;unix or 0&gt; }   // one per id, now
 { &quot;t&quot;:&quot;presence&quot;, &quot;state&quot;:&quot;away&quot; }             // client sets its own state; any other value means &quot;online&quot;
 </code></pre>
-<p>Presence covers only identities connected <strong>to this relay</strong>. Watchers are pushed a new <code>presence</code> whenever a watched identity connects, disconnects or changes state. If any session of an identity is online, that identity is <code>online</code>. <code>seen</code> is the time the identity was last connected or last proved itself, held in memory only and never persisted.</p>
+<p><code>watch</code> requires a session that proved an identity (<code>not_authorised</code> otherwise): presence is not an anonymous oracle. Presence covers only identities connected <strong>to this relay</strong>. Watchers are pushed a new <code>presence</code> whenever a watched identity connects, disconnects or changes state. If any session of an identity is online, that identity is <code>online</code>. <code>seen</code> is the time the identity was last connected or last proved itself, held in memory only and never persisted.</p>
 <h3 id="712-sig-call-signalling">7.12 <code>sig</code> (call signalling)</h3>
 <pre><code class="language-json">{ &quot;t&quot;:&quot;sig&quot;, &quot;to&quot;:&quot;&lt;fp&gt; | &lt;fp&gt;@&lt;relay&gt;&quot;, &quot;body&quot;:&quot;&lt;opaque, ≤ max_payload chars&gt;&quot;, &quot;call&quot;:&quot;&lt;optional string&gt;&quot; }
 → delivered as { &quot;t&quot;:&quot;sig&quot;, &quot;from&quot;:&quot;&lt;sender fp&gt;&quot;, &quot;body&quot;:&quot;…&quot;, &quot;call&quot;:&quot;…&quot; }
@@ -1763,9 +1763,10 @@ node_key   = node_id when known, else the peer's canonical address
 </code></pre>
 <p>The pointer is sent to each target other than this relay. Every relay computes the same list for the same peer view, so the wallet's own relay is likely to be among the relays it asks.</p>
 <p><strong>Receiving a pointer</strong> (relay sessions only; any problem means a silent drop):</p>
-<ol>
+<ol start="0">
+<li>The sending session is a <strong>verified</strong> relay (§11.2): a session that merely signed a <code>hello</code> may not deliver pointers. A pointer steers a wallet to a relay to gather mail, so it must not be plantable by anyone with a key.</li>
 <li><code>fp</code> is valid. <code>address</code> canonicalises and is not this relay. <code>ts</code> is not more than 600 s in the future and not older than the drop TTL.</li>
-<li><code>ed25519</code> decodes to 32 bytes. If this relay has a pinned key for <code>node_id</code> (§11.4), it MUST equal <code>ed25519</code>. A contradiction is logged and the pointer dropped.</li>
+<li><code>ed25519</code> decodes to 32 bytes, and <code>address</code> names a peer this relay has <strong>verified</strong> whose pinned <code>node_id</code> and <code>ed25519</code> equal the pointer's. A statement about a holder this relay has never reached, or signed with a key other than the one found there, is dropped. This is what stops a self-signed relay from pointing any fingerprint at an address of its choosing.</li>
 <li>The signature verifies over the statement rebuilt with the <strong>canonical</strong> address.</li>
 <li>The key <code>p:fp|address|ts</code> is new in the seen cache.</li>
 <li><strong>Keep</strong> the pointer if <code>fp</code> is homed here, is connected here, or this relay is in <code>fp</code>'s rendezvous set. Upsert it into <code>pointers</code> keyed <code>(fp, address)</code>, where a newer <code>ts</code> wins, with <code>expires_at = min(ts, now) + TTL</code>. Push <code>mail_at</code> to the identity's subscribed sessions.</li>
@@ -2355,7 +2356,8 @@ sig    = secp256k1 ECDSA over digest; RFC 6979 nonce; low-s; encoded as &quot;0x
 <ol>
 <li>The session has an identity, the market is enabled, and the rental exists and belongs to this identity.</li>
 <li><code>payment_key</code> is <code>0x</code> plus 40 hex characters. <code>payout</code>, lowercased, equals this relay's payout address.</li>
-<li><code>sig</code> is 132 characters starting with <code>0x</code>, and <code>cumulative_micro &gt; 0</code>. <strong>The relay never verifies the signature.</strong> Only the contract does; a bad voucher simply fails to redeem, and the rental lapses.</li>
+<li><code>payment_key</code> equals the key the rental was opened with (<code>rent</code>), <code>sig</code> is 132 characters starting with <code>0x</code>, and <code>cumulative_micro &gt; 0</code>.
+3a. <strong>The signature is verified before anything is granted on its strength.</strong> The relay rebuilds the digest above from its own <code>--vault-address</code>, <code>--chain-id</code> and payout address, recovers the secp256k1 signer exactly as the contract's <code>recover</code> does (65 bytes, <code>v &lt; 27</code> means add 27, <code>s ≤ n/2</code>, non-zero result), and requires the recovered address to equal <code>payment_key</code>. Any other outcome is <code>not_authorised</code>. A relay with no <code>--vault-address</code> cannot build the digest and answers <code>market_off</code>. What the relay still cannot see is whether the payment key holds a deposit; that remains the contract's check at settlement, so an operator settles regularly and a rental whose vouchers fail to redeem lapses when its paid time runs out.</li>
 <li>The voucher is stored verbatim if <code>cumulative</code> exceeds the highest one held for <code>(payment_key, payout)</code>. Otherwise the relay replies <code>bad_field</code>, &quot;must exceed the previous cumulative&quot;.</li>
 <li>If <code>cumulative − previous &lt; the rental's epoch price</code>, the voucher is <strong>kept</strong> (it is still the best money seen) but buys no time. The relay replies <code>bad_field</code>.</li>
 <li>Otherwise it extends the rental: <code>paid_until = min( max(paid_until, now) + epoch, now + 3 × epoch )</code>, with <code>state = 'active'</code>.</li>
@@ -3095,8 +3097,13 @@ else:                                     keep queued; try to connect to the con
 </tr>
 <tr>
 <td>Pointers</td>
-<td>Signed by the holder, checked against the pin</td>
-<td>Holder addresses are cleartext. The stored <code>x25519</code> keys exist so pointers can later be sealed to the recipient</td>
+<td>Signed by the holder; accepted only from a verified relay session and only about a holder this relay has itself verified at that address</td>
+<td>Any genuinely reachable relay may still claim to hold mail for any fingerprint, since any relay may legitimately receive a <code>send</code> for anyone. A wallet that gathers from a pointer reveals its fingerprint and source address to that relay; gathering through an onion route or a proxy is the wallet's mitigation. Holder addresses are cleartext.</td>
+</tr>
+<tr>
+<td>Presence</td>
+<td><code>watch</code> answers only a session that proved an identity</td>
+<td>A proved identity can still ask whether any fingerprint is online here; the answer covers this relay only</td>
 </tr>
 <tr>
 <td>Collection</td>
@@ -3105,8 +3112,8 @@ else:                                     keep queued; try to connect to the con
 </tr>
 <tr>
 <td>Money</td>
-<td>No chain keys on relays; vouchers bound to vault, chain and payee; wallet pins the vault address</td>
-<td>The wallet is the auditor. Audits sample 3 entries, which is probabilistic</td>
+<td>No chain keys on relays; vouchers bound to vault, chain and payee and verified by the relay before any storage is extended; wallet pins the vault address</td>
+<td>The relay cannot see deposits, so a validly signed voucher from an unfunded key still buys up to 3 epochs of storage until settlement fails; bound by <code>--pool-market-mb</code> and by settling often. The wallet is the auditor. Audits sample 3 entries, which is probabilistic</td>
 </tr>
 <tr>
 <td>Metadata at rest</td>
@@ -3157,6 +3164,8 @@ else:                                     keep queued; try to connect to the con
 <h3 id="192-a-relay-should">19.2 A relay SHOULD</h3>
 <ul>
 <li>[ ] Match the §17 limits and timers, publish <code>/node.json</code>, <code>/peers.json</code> and <code>/status.json</code>, support <code>push</code>, pointers and deposit, and park undeliverable <code>send</code>s locally.</li>
+<li>[ ] Accept pointers only from verified relay sessions and only about verified holders (§9.5 rules 0 and 2); answer <code>watch</code> only for sessions that proved an identity (§7.11).</li>
+<li>[ ] Verify every voucher's secp256k1 signature against the rental's payment key over the §14.4 digest before extending <code>paid_until</code>; refuse vouchers without a configured vault address.</li>
 </ul>
 <h3 id="193-a-wallet-must">19.3 A wallet MUST</h3>
 <ul>
@@ -3551,11 +3560,11 @@ onion accepted; terminal payload id 32277858-5188-4f7e-9946-28b1a0ed610e
   <h3>Download the white paper</h3>
   <p>The complete paper as a typeset PDF, and the same text in Markdown for machine reading. Every relay serves its own copy under <code>/assets/</code> with its SHA-256; check a downloaded file on the <a href="{{BASE}}/downloads#verify">Downloads page</a>, and cross-check the hashes against other relays there.</p>
   <div class="row">
-    <a class="btn" href="{{BASE}}/assets/R2R-WHITEPAPER.pdf" download="R2R-WHITEPAPER.pdf"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v9m0 0l-3-3m3 3l3-3"/><path d="M2 12v1a2 2 0 002 2h8a2 2 0 002-2v-1"/></svg> Download PDF <small>434 KB</small></a>
-    <a class="cta" href="{{BASE}}/assets/R2R-WHITEPAPER.md" download="R2R-WHITEPAPER.md">Markdown source <small>159 KB</small></a>
+    <a class="btn" href="{{BASE}}/assets/R2R-WHITEPAPER.pdf" download="R2R-WHITEPAPER.pdf"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v9m0 0l-3-3m3 3l3-3"/><path d="M2 12v1a2 2 0 002 2h8a2 2 0 002-2v-1"/></svg> Download PDF <small>438 KB</small></a>
+    <a class="cta" href="{{BASE}}/assets/R2R-WHITEPAPER.md" download="R2R-WHITEPAPER.md">Markdown source <small>161 KB</small></a>
   </div>
-  <p class="sha"><strong>SHA-256 · PDF:</strong> <code data-sha-for="R2R-WHITEPAPER.pdf">7de2e946f9f2434c4cada315a3c72597690ec8fecc67aed8104108715e89b2c0</code></p>
-  <p class="sha"><strong>SHA-256 · Markdown:</strong> <code data-sha-for="R2R-WHITEPAPER.md">df29f2c7b548b0d00db0a2ae6085dfa5b4839e1ac96a6325f9be3a5b9df675c1</code></p>
+  <p class="sha"><strong>SHA-256 · PDF:</strong> <code data-sha-for="R2R-WHITEPAPER.pdf">ee41f40b3ffceaaea8c597595dd802841d6decf3627efc4bf45efdcaa763b3ec</code></p>
+  <p class="sha"><strong>SHA-256 · Markdown:</strong> <code data-sha-for="R2R-WHITEPAPER.md">53283c132b16dbe70a04a2580130e9d8588debd0f478e284a90baf7fde84f8e4</code></p>
 </div>
 
 </article>

@@ -703,12 +703,24 @@ void Hub::emit_pointer_if_remote(const std::string& recipient, const std::string
 }
 
 void Hub::handle_pointer(const SessionPtr& s, const json& j) {
+    // send_error takes mu_ itself, so the role is read under the lock and
+    // the reply goes out after it is released.
+    bool is_relay;
     {
         std::lock_guard<std::mutex> lock(mu_);
-        if (s->role != Role::relay) {
-            send_error(s->conn, proto::kErrNotAuthorised, "pointers travel between relays");
-            return;
-        }
+        is_relay = s->role == Role::relay;
+    }
+    if (!is_relay) {
+        send_error(s->conn, proto::kErrNotAuthorised, "pointers travel between relays");
+        return;
+    }
+    // A pointer steers a wallet to a relay to gather mail, so it is accepted
+    // only from a relay this node has verified (§11.2), and only about a
+    // holder this node has verified: any key can sign a statement, but only
+    // a relay found where it claims to be may be pointed at.
+    if (!session_is_verified_relay(s)) {
+        log::debug("pointer from an unverified relay session (", s->peer_address, ") dropped");
+        return;
     }
     const std::string fp = util::to_lower(j.value("fp", std::string{}));
     const std::string sig_b64 = j.value("sig", std::string{});
@@ -727,17 +739,16 @@ void Hub::handle_pointer(const SessionPtr& s, const json& j) {
         static_cast<std::int64_t>(cfg_.drop_ttl_days) * 86400;
     if (ts > now + 600 || ts < now - max_age) return;
 
-    // The statement must verify against the presented key, and the key must
-    // not contradict a pin learned from a live handshake with that node.
+    // The statement must verify against the presented key, and that key must
+    // be the pinned key of a verified peer at exactly the address pointed at.
     auto ed = util::b64_decode(ed_b64);
     auto sig = util::b64_decode(sig_b64);
     if (!ed || ed->size() != crypto::kPubLen || !sig) return;
-    if (auto pinned = peers_.find_by_node(node_id)) {
-        if (!pinned->ed25519.empty() && pinned->ed25519 != ed_b64) {
-            log::warn("pointer for ", log::short_id(fp), " signed with a key that contradicts "
-                      "the pin for node ", log::short_id(node_id), "; dropped");
-            return;
-        }
+    auto holder = peers_.find(*canon);
+    if (!holder || !holder->verified || holder->node_id != node_id || holder->ed25519 != ed_b64) {
+        log::debug("pointer for ", log::short_id(fp), " names ", *canon, " (node ",
+                   log::short_id(node_id), "), which is not a relay this node has verified; dropped");
+        return;
     }
     if (!crypto::verify_signature(*ed, proto::pointer_signing_string(fp, *canon, ts), *sig))
         return;
@@ -839,12 +850,14 @@ void Hub::handle_deposit(const SessionPtr& s, const json& j) {
 }
 
 void Hub::handle_collect(const SessionPtr& s, const json& j) {
+    bool is_relay;
     {
         std::lock_guard<std::mutex> lock(mu_);
-        if (s->role != Role::relay) {
-            send_error(s->conn, proto::kErrNotAuthorised, "collection is presented by relays");
-            return;
-        }
+        is_relay = s->role == Role::relay;
+    }
+    if (!is_relay) {
+        send_error(s->conn, proto::kErrNotAuthorised, "collection is presented by relays");
+        return;
     }
     const std::string fp = util::to_lower(j.value("fp", std::string{}));
     const std::string pub_b64 = j.value("pubkey", std::string{});
@@ -1393,6 +1406,19 @@ void Hub::push_presence(const std::string& fingerprint) {
 }
 
 void Hub::handle_watch(const SessionPtr& s, const json& j) {
+    // Who is online is not public: an anonymous session could otherwise poll
+    // any fingerprint's presence, which is the first step of steering a live
+    // wallet somewhere. Proving a key costs the caller nothing but ties every
+    // query to an identity.
+    bool proved;
+    {
+        std::lock_guard<std::mutex> lock(mu_);
+        proved = !s->identity.empty();
+    }
+    if (!proved) {
+        send_error(s->conn, proto::kErrNotAuthorised, "send a hello with your id first");
+        return;
+    }
     if (!j.contains("ids") || !j["ids"].is_array()) {
         send_error(s->conn, proto::kErrBadField, "watch needs an ids array");
         return;
@@ -1723,12 +1749,37 @@ void Hub::handle_voucher(const SessionPtr& s, const json& j) {
                    "payment_key must be an address and payout must be this relay's");
         return;
     }
+    if (payment_key != rental->payment_key) {
+        send_error(s->conn, proto::kErrBadField, "payment_key is not the one this rental was opened with",
+                   rental_id);
+        return;
+    }
     const std::int64_t cumulative = j.value("cumulative_micro", std::int64_t{0});
-    const std::string sig = j.value("sig", std::string{});
-    // 65-byte EIP-191 signature as 0x + 130 hex. Opaque to the relay: only
-    // the vault contract verifies it, a bad one simply fails to redeem.
+    const std::string sig = util::to_lower(util::trim(j.value("sig", std::string{})));
+    // 65-byte EIP-191 signature as 0x + 130 hex.
     if (sig.size() != 132 || sig.rfind("0x", 0) != 0 || cumulative <= 0) {
         send_error(s->conn, proto::kErrBadField, "voucher needs cumulative_micro and a 65-byte sig");
+        return;
+    }
+    // The signature is checked here, before any storage is granted on its
+    // strength: the same recovery the vault performs at redemption, over the
+    // §14.4 digest, and the signer must be the rental's payment key. Storage
+    // was handed over on unverified vouchers once, and garbage bought months.
+    if (cfg_.vault_address.empty()) {
+        send_error(s->conn, proto::kErrMarketOff,
+                   "this relay cannot verify vouchers: it has no --vault-address");
+        return;
+    }
+    const crypto::Bytes digest =
+        crypto::evm_voucher_digest(cfg_.vault_address, cfg_.chain_id, payout, cumulative);
+    auto sig_bytes = util::hex_decode(std::string_view(sig).substr(2));
+    std::optional<std::string> signer;
+    if (!digest.empty() && sig_bytes) signer = crypto::evm_recover_address(digest, *sig_bytes);
+    if (!signer || *signer != payment_key) {
+        log::warn("voucher from ", log::short_id(identity), " for rental ", rental_id,
+                  " does not verify against payment key ", payment_key, "; refused");
+        send_error(s->conn, proto::kErrNotAuthorised, "voucher signature does not match the payment key",
+                   rental_id);
         return;
     }
 

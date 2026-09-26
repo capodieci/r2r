@@ -2,7 +2,7 @@
 
 ## White paper and complete protocol specification
 
-**Protocol:** R2R v2 (wire `proto` field: `1`) · **Reference relay:** `r2r-relay` 1.0.1 (C++20) · **Reference client:** the R-2-Я wallet (single-file HTML/JS) · **Document date:** 26 September 2026 (this revision: peer-table verification rules in §11, relay 1.0.1; 23 September: wallet onion routing, relay input hardening, invite activation, new seed network, onion v2 with standby relays, scrypt key derivation)
+**Protocol:** R2R v2 (wire `proto` field: `1`) · **Reference relay:** `r2r-relay` 1.0.2 (C++20) · **Reference client:** the R-2-Я wallet (single-file HTML/JS) · **Document date:** 26 September 2026 (this revision: voucher signature verification in §14.4, pointer and presence rules in §9.5 and §7.11, relay 1.0.2; earlier the same day: peer-table verification rules in §11, relay 1.0.1; 23 September: wallet onion routing, relay input hardening, invite activation, new seed network, onion v2 with standby relays, scrypt key derivation)
 
 ---
 
@@ -618,7 +618,7 @@ Requires identity.
 { "t":"presence", "state":"away" }             // client sets its own state; any other value means "online"
 ```
 
-Presence covers only identities connected **to this relay**. Watchers are pushed a new `presence` whenever a watched identity connects, disconnects or changes state. If any session of an identity is online, that identity is `online`. `seen` is the time the identity was last connected or last proved itself, held in memory only and never persisted.
+`watch` requires a session that proved an identity (`not_authorised` otherwise): presence is not an anonymous oracle. Presence covers only identities connected **to this relay**. Watchers are pushed a new `presence` whenever a watched identity connects, disconnects or changes state. If any session of an identity is online, that identity is `online`. `seen` is the time the identity was last connected or last proved itself, held in memory only and never persisted.
 
 ### 7.12 `sig` (call signalling)
 
@@ -918,8 +918,9 @@ The pointer is sent to each target other than this relay. Every relay computes t
 
 **Receiving a pointer** (relay sessions only; any problem means a silent drop):
 
+0. The sending session is a **verified** relay (§11.2): a session that merely signed a `hello` may not deliver pointers. A pointer steers a wallet to a relay to gather mail, so it must not be plantable by anyone with a key.
 1. `fp` is valid. `address` canonicalises and is not this relay. `ts` is not more than 600 s in the future and not older than the drop TTL.
-2. `ed25519` decodes to 32 bytes. If this relay has a pinned key for `node_id` (§11.4), it MUST equal `ed25519`. A contradiction is logged and the pointer dropped.
+2. `ed25519` decodes to 32 bytes, and `address` names a peer this relay has **verified** whose pinned `node_id` and `ed25519` equal the pointer's. A statement about a holder this relay has never reached, or signed with a key other than the one found there, is dropped. This is what stops a self-signed relay from pointing any fingerprint at an address of its choosing.
 3. The signature verifies over the statement rebuilt with the **canonical** address.
 4. The key `p:fp|address|ts` is new in the seen cache.
 5. **Keep** the pointer if `fp` is homed here, is connected here, or this relay is in `fp`'s rendezvous set. Upsert it into `pointers` keyed `(fp, address)`, where a newer `ts` wins, with `expires_at = min(ts, now) + TTL`. Push `mail_at` to the identity's subscribed sessions.
@@ -1437,7 +1438,8 @@ The relay checks, in this order:
 
 1. The session has an identity, the market is enabled, and the rental exists and belongs to this identity.
 2. `payment_key` is `0x` plus 40 hex characters. `payout`, lowercased, equals this relay's payout address.
-3. `sig` is 132 characters starting with `0x`, and `cumulative_micro > 0`. **The relay never verifies the signature.** Only the contract does; a bad voucher simply fails to redeem, and the rental lapses.
+3. `payment_key` equals the key the rental was opened with (`rent`), `sig` is 132 characters starting with `0x`, and `cumulative_micro > 0`.
+3a. **The signature is verified before anything is granted on its strength.** The relay rebuilds the digest above from its own `--vault-address`, `--chain-id` and payout address, recovers the secp256k1 signer exactly as the contract's `recover` does (65 bytes, `v < 27` means add 27, `s ≤ n/2`, non-zero result), and requires the recovered address to equal `payment_key`. Any other outcome is `not_authorised`. A relay with no `--vault-address` cannot build the digest and answers `market_off`. What the relay still cannot see is whether the payment key holds a deposit; that remains the contract's check at settlement, so an operator settles regularly and a rental whose vouchers fail to redeem lapses when its paid time runs out.
 4. The voucher is stored verbatim if `cumulative` exceeds the highest one held for `(payment_key, payout)`. Otherwise the relay replies `bad_field`, "must exceed the previous cumulative".
 5. If `cumulative − previous < the rental's epoch price`, the voucher is **kept** (it is still the best money seen) but buys no time. The relay replies `bad_field`.
 6. Otherwise it extends the rental: `paid_until = min( max(paid_until, now) + epoch, now + 3 × epoch )`, with `state = 'active'`.
@@ -1728,9 +1730,10 @@ v1 compatibility variables that are still honoured: `PORT`, `DATA_DIR`, `QUEUE_T
 | Home-relay integrity | Registration requires a proof, so nobody can redirect someone else's mail | Home relays are local knowledge, not network-wide |
 | Relay identity | Ed25519 node key, node id bound to the key, TOFU pin per address set only by a handshake on a link this relay dialled, pinned keys that gossip can never overwrite | The **first** contact with an address is unauthenticated (TOFU); over `ws://`, an active attacker on that path could be pinned first |
 | Peer table | Anyone may open a relay session, but only addresses this relay has dialled and found are verified, published, gossiped or used for rendezvous; peer lists are accepted from verified relays only, capped per session; unverified claims get at most 2 verification dials per 15 s; non-public addresses are refused everywhere | A node that really runs a reachable relay is verified like any other and may then gossip; its entries are still dialled at the bounded rate, to public addresses only, and it learns nothing from the outcome |
-| Pointers | Signed by the holder, checked against the pin | Holder addresses are cleartext. The stored `x25519` keys exist so pointers can later be sealed to the recipient |
+| Pointers | Signed by the holder; accepted only from a verified relay session and only about a holder this relay has itself verified at that address | Any genuinely reachable relay may still claim to hold mail for any fingerprint, since any relay may legitimately receive a `send` for anyone. A wallet that gathers from a pointer reveals its fingerprint and source address to that relay; gathering through an onion route or a proxy is the wallet's mitigation. Holder addresses are cleartext. |
+| Presence | `watch` answers only a session that proved an identity | A proved identity can still ask whether any fingerprint is online here; the answer covers this relay only |
 | Collection | Holder-bound, single-use nonce, 7-day window, collector not named | A holder learns that *someone* collected for a fingerprint |
-| Money | No chain keys on relays; vouchers bound to vault, chain and payee; wallet pins the vault address | The wallet is the auditor. Audits sample 3 entries, which is probabilistic |
+| Money | No chain keys on relays; vouchers bound to vault, chain and payee and verified by the relay before any storage is extended; wallet pins the vault address | The relay cannot see deposits, so a validly signed voucher from an unfunded key still buys up to 3 epochs of storage until settlement fails; bound by `--pool-market-mb` and by settling often. The wallet is the auditor. Audits sample 3 entries, which is probabilistic |
 | Metadata at rest | No IPs, last-seen rounded to the hour, `secure_delete`, a privacy contract on logging | Relays see recipient fingerprints, sizes, timing and journal activity |
 
 ### 18.2 Metadata exposure
@@ -1779,6 +1782,8 @@ Traffic analysis by a global passive adversary; a malicious recipient (who can a
 ### 19.2 A relay SHOULD
 
 - [ ] Match the §17 limits and timers, publish `/node.json`, `/peers.json` and `/status.json`, support `push`, pointers and deposit, and park undeliverable `send`s locally.
+- [ ] Accept pointers only from verified relay sessions and only about verified holders (§9.5 rules 0 and 2); answer `watch` only for sessions that proved an identity (§7.11).
+- [ ] Verify every voucher's secp256k1 signature against the rental's payment key over the §14.4 digest before extending `paid_until`; refuse vouchers without a configured vault address.
 
 ### 19.3 A wallet MUST
 

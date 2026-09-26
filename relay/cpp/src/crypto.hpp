@@ -101,6 +101,26 @@ bool verify_signature(const Bytes& ed_pub, std::string_view msg, const Bytes& si
 Bytes hmac_sha1(std::string_view key, std::string_view msg);
 Bytes hmac_sha256(std::string_view key, std::string_view msg);
 
+// ---- EVM: what the storage market needs to check a voucher ----------------
+// Keccak-256 (the original padding Ethereum uses, not FIPS SHA3-256).
+Bytes keccak256(const void* data, std::size_t len);
+inline Bytes keccak256(const Bytes& v) { return keccak256(v.data(), v.size()); }
+// The white paper §14.4 voucher digest: EIP-191 personal_sign over
+// Keccak-256("r2r-voucher-v1" ‖ vault[20] ‖ uint256(chain_id) ‖ payee[20] ‖ uint256(cumulative)).
+// `vault` and `payee` are 0x-prefixed hex addresses; empty on bad input.
+Bytes evm_voucher_digest(std::string_view vault, std::int64_t chain_id, std::string_view payee,
+                         std::int64_t cumulative_micro);
+// Recovers the signer of a 65-byte (r ‖ s ‖ v) secp256k1 signature over
+// `digest32` and returns its lowercase 0x address. Rejects high-s (the
+// malleable half, as the vault contract does) and v outside {0,1,27,28}.
+std::optional<std::string> evm_recover_address(const Bytes& digest32, const Bytes& sig65);
+// Address of a secp256k1 private key (32 bytes), lowercase 0x hex.
+std::optional<std::string> evm_address_of(const Bytes& priv32);
+// Signs `digest32` with a secp256k1 private key: 65 bytes r ‖ s ‖ v, low-s,
+// v ∈ {27, 28}. Used by the probe to mint test vouchers; the relay only
+// recovers.
+std::optional<Bytes> evm_sign(const Bytes& priv32, const Bytes& digest32);
+
 // Anonymous sealed box: ephemeral X25519 -> HKDF-SHA256 -> AES-256-GCM.
 // Layout: version(1) || eph_pub(32) || nonce(12) || ciphertext || tag(16)
 std::optional<Bytes> seal(const Bytes& recipient_x_pub, const void* plaintext, std::size_t len);

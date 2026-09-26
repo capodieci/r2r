@@ -1,9 +1,14 @@
 #include "crypto.hpp"
 
 #include <cctype>
+#include <openssl/bn.h>
+#include <openssl/core_names.h>
 #include <openssl/crypto.h>
+#include <openssl/ec.h>
+#include <openssl/ecdsa.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/param_build.h>
 #include <openssl/hmac.h>
 #include <openssl/kdf.h>
 #include <openssl/opensslv.h>
@@ -14,6 +19,7 @@
 #include <stdexcept>
 
 #include "log.hpp"
+#include "util.hpp"
 
 namespace r2r::crypto {
 namespace {
@@ -113,6 +119,10 @@ std::optional<Bytes> aes_gcm_encrypt(const Bytes& key, const Bytes& nonce, const
         return std::nullopt;
 
     Bytes out(pt_len + kTagLen);
+    // `outl` still holds the AAD length here; with an empty plaintext the
+    // update below is skipped and the tag would land aad.size() bytes past
+    // the buffer. Count only ciphertext bytes.
+    outl = 0;
     if (pt_len > 0 &&
         EVP_EncryptUpdate(ctx.get(), out.data(), &outl, static_cast<const unsigned char*>(pt),
                           static_cast<int>(pt_len)) != 1)
@@ -145,6 +155,7 @@ std::optional<Bytes> aes_gcm_decrypt(const Bytes& key, const Bytes& nonce, const
         EVP_DecryptUpdate(ctx.get(), nullptr, &outl, aad.data(), static_cast<int>(aad.size())) != 1)
         return std::nullopt;
     Bytes out(body ? body : 1);
+    outl = 0;  // same as in encrypt: the AAD update's length is not plaintext
     if (body > 0 &&
         EVP_DecryptUpdate(ctx.get(), out.data(), &outl, ct, static_cast<int>(body)) != 1)
         return std::nullopt;
@@ -513,6 +524,242 @@ std::optional<Bytes> unseal_multi(const Bytes& our_x_priv, const Bytes& our_x_pu
                       blob.begin() + static_cast<std::ptrdiff_t>(header + kNonceLen));
     return aes_gcm_decrypt(*key, nonce, aad, blob.data() + header + kNonceLen,
                            blob.size() - header - kNonceLen);
+}
+
+// ---- EVM helpers -------------------------------------------------------------
+
+namespace {
+
+// Keccak-f[1600] on 25 lanes; the sponge below uses rate 136 (Keccak-256).
+void keccak_f1600(std::uint64_t st[25]) {
+    static const std::uint64_t RC[24] = {
+        0x0000000000000001ULL, 0x0000000000008082ULL, 0x800000000000808aULL, 0x8000000080008000ULL,
+        0x000000000000808bULL, 0x0000000080000001ULL, 0x8000000080008081ULL, 0x8000000000008009ULL,
+        0x000000000000008aULL, 0x0000000000000088ULL, 0x0000000080008009ULL, 0x000000008000000aULL,
+        0x000000008000808bULL, 0x800000000000008bULL, 0x8000000000008089ULL, 0x8000000000008003ULL,
+        0x8000000000008002ULL, 0x8000000000000080ULL, 0x000000000000800aULL, 0x800000008000000aULL,
+        0x8000000080008081ULL, 0x8000000000008080ULL, 0x0000000080000001ULL, 0x8000000080008008ULL};
+    static const int R[25] = {0, 1, 62, 28, 27, 36, 44, 6, 55, 20, 3, 10, 43,
+                              25, 39, 41, 45, 15, 21, 8, 18, 2, 61, 56, 14};
+    const auto rotl = [](std::uint64_t x, int n) { return n ? (x << n) | (x >> (64 - n)) : x; };
+    for (int round = 0; round < 24; ++round) {
+        std::uint64_t C[5], D[5], B[25];
+        for (int x = 0; x < 5; ++x) C[x] = st[x] ^ st[x + 5] ^ st[x + 10] ^ st[x + 15] ^ st[x + 20];
+        for (int x = 0; x < 5; ++x) D[x] = C[(x + 4) % 5] ^ rotl(C[(x + 1) % 5], 1);
+        for (int i = 0; i < 25; ++i) st[i] ^= D[i % 5];
+        for (int x = 0; x < 5; ++x)
+            for (int y = 0; y < 5; ++y)
+                B[y + 5 * ((2 * x + 3 * y) % 5)] = rotl(st[x + 5 * y], R[x + 5 * y]);
+        for (int x = 0; x < 5; ++x)
+            for (int y = 0; y < 5; ++y)
+                st[x + 5 * y] = B[x + 5 * y] ^ (~B[(x + 1) % 5 + 5 * y] & B[(x + 2) % 5 + 5 * y]);
+        st[0] ^= RC[round];
+    }
+}
+
+Bytes hex_addr(const unsigned char* pub64) {
+    Bytes h = keccak256(pub64, 64);
+    return Bytes(h.begin() + 12, h.end());
+}
+
+std::optional<Bytes> addr_bytes(std::string_view hex0x) {
+    if (hex0x.size() != 42 || hex0x[0] != '0' || (hex0x[1] != 'x' && hex0x[1] != 'X'))
+        return std::nullopt;
+    auto b = util::hex_decode(hex0x.substr(2));
+    if (!b || b->size() != 20) return std::nullopt;
+    return b;
+}
+
+void put_uint256(Bytes& out, std::int64_t v) {
+    for (int i = 0; i < 24; ++i) out.push_back(0);
+    for (int i = 7; i >= 0; --i) out.push_back(static_cast<std::uint8_t>((static_cast<std::uint64_t>(v) >> (8 * i)) & 0xff));
+}
+
+struct BnFree { void operator()(BIGNUM* b) const { BN_free(b); } };
+struct BnCtxFree { void operator()(BN_CTX* c) const { BN_CTX_free(c); } };
+struct GroupFree { void operator()(EC_GROUP* g) const { EC_GROUP_free(g); } };
+struct PointFree { void operator()(EC_POINT* p) const { EC_POINT_free(p); } };
+using BnPtr = std::unique_ptr<BIGNUM, BnFree>;
+using BnCtxPtr = std::unique_ptr<BN_CTX, BnCtxFree>;
+using GroupPtr = std::unique_ptr<EC_GROUP, GroupFree>;
+using PointPtr = std::unique_ptr<EC_POINT, PointFree>;
+
+// secp256k1 n / 2, the malleability boundary the vault contract enforces.
+const char* const kHalfOrderHex = "7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0";
+
+}  // namespace
+
+Bytes keccak256(const void* data, std::size_t len) {
+    std::uint64_t st[25] = {0};
+    const auto* in = static_cast<const std::uint8_t*>(data);
+    constexpr std::size_t rate = 136;
+    std::uint8_t block[rate];
+    std::size_t off = 0;
+    const auto absorb = [&](const std::uint8_t* b) {
+        for (std::size_t i = 0; i < rate / 8; ++i) {
+            std::uint64_t lane = 0;
+            for (int k = 7; k >= 0; --k) lane = (lane << 8) | b[i * 8 + k];
+            st[i] ^= lane;
+        }
+        keccak_f1600(st);
+    };
+    while (len - off >= rate) {
+        absorb(in + off);
+        off += rate;
+    }
+    std::memset(block, 0, rate);
+    std::memcpy(block, in + off, len - off);
+    block[len - off] ^= 0x01;   // Keccak padding (SHA-3 would use 0x06)
+    block[rate - 1] ^= 0x80;
+    absorb(block);
+    Bytes out(32);
+    for (int i = 0; i < 4; ++i)
+        for (int k = 0; k < 8; ++k) out[i * 8 + k] = static_cast<std::uint8_t>(st[i] >> (8 * k));
+    return out;
+}
+
+Bytes evm_voucher_digest(std::string_view vault, std::int64_t chain_id, std::string_view payee,
+                         std::int64_t cumulative_micro) {
+    auto v = addr_bytes(vault);
+    auto p = addr_bytes(payee);
+    if (!v || !p || chain_id <= 0 || cumulative_micro < 0) return {};
+    Bytes m;
+    const std::string tag = "r2r-voucher-v1";
+    m.insert(m.end(), tag.begin(), tag.end());
+    m.insert(m.end(), v->begin(), v->end());
+    put_uint256(m, chain_id);
+    m.insert(m.end(), p->begin(), p->end());
+    put_uint256(m, cumulative_micro);
+    const Bytes inner = keccak256(m);
+    const std::string prefix = "\x19" "Ethereum Signed Message:\n32";
+    Bytes outer(prefix.begin(), prefix.end());
+    outer.insert(outer.end(), inner.begin(), inner.end());
+    return keccak256(outer);
+}
+
+std::optional<std::string> evm_recover_address(const Bytes& digest32, const Bytes& sig65) {
+    if (digest32.size() != 32 || sig65.size() != 65) return std::nullopt;
+    int v = sig65[64];
+    if (v >= 27) v -= 27;
+    if (v != 0 && v != 1) return std::nullopt;
+
+    GroupPtr group(EC_GROUP_new_by_curve_name(NID_secp256k1));
+    BnCtxPtr ctx(BN_CTX_new());
+    if (!group || !ctx) return std::nullopt;
+    BnPtr r(BN_bin2bn(sig65.data(), 32, nullptr));
+    BnPtr s(BN_bin2bn(sig65.data() + 32, 32, nullptr));
+    BnPtr e(BN_bin2bn(digest32.data(), 32, nullptr));
+    BnPtr n(BN_new()), half(nullptr), rinv(BN_new()), u1(BN_new()), u2(BN_new());
+    if (!r || !s || !e || !n || !rinv || !u1 || !u2) return std::nullopt;
+    if (EC_GROUP_get_order(group.get(), n.get(), ctx.get()) != 1) return std::nullopt;
+    BIGNUM* half_raw = nullptr;
+    if (BN_hex2bn(&half_raw, kHalfOrderHex) == 0) return std::nullopt;
+    half.reset(half_raw);
+    if (BN_is_zero(r.get()) || BN_is_zero(s.get()) || BN_cmp(r.get(), n.get()) >= 0 ||
+        BN_cmp(s.get(), half.get()) > 0)
+        return std::nullopt;
+
+    // R = the curve point with x = r and the parity v names.
+    PointPtr R(EC_POINT_new(group.get()));
+    if (!R || EC_POINT_set_compressed_coordinates(group.get(), R.get(), r.get(), v, ctx.get()) != 1)
+        return std::nullopt;
+    // Q = r^-1 (s·R − e·G)
+    if (!BN_mod_inverse(rinv.get(), r.get(), n.get(), ctx.get())) return std::nullopt;
+    if (BN_mod_mul(u2.get(), s.get(), rinv.get(), n.get(), ctx.get()) != 1) return std::nullopt;
+    if (BN_mod_mul(u1.get(), e.get(), rinv.get(), n.get(), ctx.get()) != 1) return std::nullopt;
+    if (BN_sub(u1.get(), n.get(), u1.get()) != 1) return std::nullopt;  // −e·r^-1 mod n
+    PointPtr Q(EC_POINT_new(group.get()));
+    if (!Q || EC_POINT_mul(group.get(), Q.get(), u1.get(), R.get(), u2.get(), ctx.get()) != 1)
+        return std::nullopt;
+    if (EC_POINT_is_at_infinity(group.get(), Q.get())) return std::nullopt;
+    unsigned char pub[65];
+    if (EC_POINT_point2oct(group.get(), Q.get(), POINT_CONVERSION_UNCOMPRESSED, pub, sizeof pub,
+                           ctx.get()) != sizeof pub)
+        return std::nullopt;
+    return "0x" + util::hex_encode(hex_addr(pub + 1));
+}
+
+std::optional<std::string> evm_address_of(const Bytes& priv32) {
+    if (priv32.size() != 32) return std::nullopt;
+    GroupPtr group(EC_GROUP_new_by_curve_name(NID_secp256k1));
+    BnCtxPtr ctx(BN_CTX_new());
+    BnPtr d(BN_bin2bn(priv32.data(), 32, nullptr));
+    if (!group || !ctx || !d) return std::nullopt;
+    PointPtr Q(EC_POINT_new(group.get()));
+    if (!Q || EC_POINT_mul(group.get(), Q.get(), d.get(), nullptr, nullptr, ctx.get()) != 1)
+        return std::nullopt;
+    unsigned char pub[65];
+    if (EC_POINT_point2oct(group.get(), Q.get(), POINT_CONVERSION_UNCOMPRESSED, pub, sizeof pub,
+                           ctx.get()) != sizeof pub)
+        return std::nullopt;
+    return "0x" + util::hex_encode(hex_addr(pub + 1));
+}
+
+std::optional<Bytes> evm_sign(const Bytes& priv32, const Bytes& digest32) {
+    if (priv32.size() != 32 || digest32.size() != 32) return std::nullopt;
+    auto address = evm_address_of(priv32);
+    if (!address) return std::nullopt;
+
+    // Build an EVP key from the raw scalar (the non-deprecated route in 3.x).
+    OSSL_PARAM_BLD* bld = OSSL_PARAM_BLD_new();
+    if (!bld) return std::nullopt;
+    BnPtr d(BN_bin2bn(priv32.data(), 32, nullptr));
+    OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_GROUP_NAME, "secp256k1", 0);
+    OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY, d.get());
+    OSSL_PARAM* params = OSSL_PARAM_BLD_to_param(bld);
+    OSSL_PARAM_BLD_free(bld);
+    if (!params) return std::nullopt;
+    EVP_PKEY* raw = nullptr;
+    EVP_PKEY_CTX* kctx = EVP_PKEY_CTX_new_from_name(nullptr, "EC", nullptr);
+    const bool made = kctx && EVP_PKEY_fromdata_init(kctx) == 1 &&
+                      EVP_PKEY_fromdata(kctx, &raw, EVP_PKEY_KEYPAIR, params) == 1;
+    OSSL_PARAM_free(params);
+    EVP_PKEY_CTX_free(kctx);
+    if (!made || !raw) return std::nullopt;
+    std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> key(raw, EVP_PKEY_free);
+
+    EVP_PKEY_CTX* sctx = EVP_PKEY_CTX_new(key.get(), nullptr);
+    if (!sctx) return std::nullopt;
+    std::unique_ptr<EVP_PKEY_CTX, decltype(&EVP_PKEY_CTX_free)> sguard(sctx, EVP_PKEY_CTX_free);
+    std::size_t der_len = 0;
+    if (EVP_PKEY_sign_init(sctx) != 1 ||
+        EVP_PKEY_sign(sctx, nullptr, &der_len, digest32.data(), digest32.size()) != 1)
+        return std::nullopt;
+    Bytes der(der_len);
+    if (EVP_PKEY_sign(sctx, der.data(), &der_len, digest32.data(), digest32.size()) != 1)
+        return std::nullopt;
+    const unsigned char* pp = der.data();
+    ECDSA_SIG* esig = d2i_ECDSA_SIG(nullptr, &pp, static_cast<long>(der_len));
+    if (!esig) return std::nullopt;
+    const BIGNUM* r = nullptr;
+    const BIGNUM* s = nullptr;
+    ECDSA_SIG_get0(esig, &r, &s);
+    BnPtr s_low(BN_dup(s));
+    BnPtr rr(BN_dup(r));
+    ECDSA_SIG_free(esig);
+    if (!s_low || !rr) return std::nullopt;
+
+    // Low-s: if s > n/2, use n − s (the vault refuses the other half).
+    GroupPtr group(EC_GROUP_new_by_curve_name(NID_secp256k1));
+    BnCtxPtr ctx(BN_CTX_new());
+    BnPtr n(BN_new());
+    if (!group || !ctx || !n || EC_GROUP_get_order(group.get(), n.get(), ctx.get()) != 1)
+        return std::nullopt;
+    BIGNUM* half_raw = nullptr;
+    if (BN_hex2bn(&half_raw, kHalfOrderHex) == 0) return std::nullopt;
+    BnPtr half(half_raw);
+    if (BN_cmp(s_low.get(), half.get()) > 0 && BN_sub(s_low.get(), n.get(), s_low.get()) != 1)
+        return std::nullopt;
+
+    Bytes sig(65, 0);
+    if (BN_bn2binpad(rr.get(), sig.data(), 32) != 32 || BN_bn2binpad(s_low.get(), sig.data() + 32, 32) != 32)
+        return std::nullopt;
+    // The recovery id is whichever parity brings back our own address.
+    for (int v = 0; v < 2; ++v) {
+        sig[64] = static_cast<std::uint8_t>(27 + v);
+        if (auto rec = evm_recover_address(digest32, sig); rec && *rec == *address) return sig;
+    }
+    return std::nullopt;
 }
 
 }  // namespace r2r::crypto

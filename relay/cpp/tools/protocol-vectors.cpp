@@ -385,7 +385,7 @@ json section_meta() {
         "(sealed boxes) were generated once and embedded as constants; the generator opens them with "
         "the public API on every run, and two runs print identical documents.";
     j["whitepaper"] =
-        "docs/R2R-WHITEPAPER.md sections 3 (conventions), 4 (identities), 10 (onion) and Appendix A. "
+        "protocol/R2R-WHITEPAPER.md sections 3 (conventions), 4 (identities), 10 (onion) and Appendix A. "
         "Values marked whitepaper_ref reproduce Appendix A and are asserted by the generator.";
     j["conventions"] = {
         {"hex", "lowercase on output; decoders accept either case"},
@@ -1267,6 +1267,69 @@ json section_invites_and_fingerprints(const Fixtures& f) {
 
 }  // namespace
 
+// A.13: the storage voucher. The relay recovers the signer of every voucher
+// before it extends a rental, so a port needs the digest and the recovery to
+// agree with the vault contract byte for byte. The published signature was
+// produced by the wallet's eth.js; ECDSA here is randomised, so only the
+// digest and the recovered address are known answers.
+json section_voucher() {
+    const std::string priv_hex = "4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318";
+    const std::string address = "0x2c7536e3605d9c16a7a3d7b1898e529396a65c23";
+    const std::string vault = "0x1111111111111111111111111111111111111111";
+    const std::string payee = "0x2222222222222222222222222222222222222222";
+    const std::int64_t chain_id = 8453, cumulative = 489;
+    const std::string sig_hex =
+        "0x4db3024afb2fdce238d7b2823f59014464c614621c190f98861a38829f8508bb"
+        "5a868b971f2f5da04310cf7fde8b95c383664fb96420361654d77758ea000d901c";
+
+    // inner = Keccak-256("r2r-voucher-v1" ‖ vault ‖ uint256(chain) ‖ payee ‖ uint256(cumulative))
+    Bytes m = bytes_of("r2r-voucher-v1");
+    m = cat({m, hx(vault.substr(2))});
+    Bytes chain_be(32, 0), cum_be(32, 0);
+    for (int i = 0; i < 8; ++i) {
+        chain_be[31 - i] = static_cast<std::uint8_t>((chain_id >> (8 * i)) & 0xff);
+        cum_be[31 - i] = static_cast<std::uint8_t>((cumulative >> (8 * i)) & 0xff);
+    }
+    m = cat({m, chain_be, hx(payee.substr(2)), cum_be});
+    const Bytes inner = crypto::keccak256(m);
+    check(hex(inner) == "e4162b4e96a99274413055ab991501f0d55e2d4afa94471faf0e6b269966bac0",
+          "A.13 inner hash");
+    const Bytes digest = crypto::evm_voucher_digest(vault, chain_id, payee, cumulative);
+    check(digest == crypto::keccak256(cat({bytes_of("\x19" "Ethereum Signed Message:\n32"), inner})),
+          "A.13 EIP-191 digest");
+    auto derived = crypto::evm_address_of(hx(priv_hex));
+    check(derived && *derived == address, "A.13 address from private key");
+    auto signer = crypto::evm_recover_address(digest, hx(sig_hex.substr(2)));
+    check(signer && *signer == address, "A.13 signature recovers to the payment key");
+    // A fresh signature from the same key must recover to the same address.
+    auto fresh = crypto::evm_sign(hx(priv_hex), digest);
+    check(fresh && fresh->size() == 65, "A.13 fresh signature");
+    auto again = crypto::evm_recover_address(digest, *fresh);
+    check(again && *again == address, "A.13 fresh signature recovers");
+    // The malleable twin (n - s) must be refused, as the vault refuses it.
+    Bytes high = hx(sig_hex.substr(2));
+    check(!crypto::evm_recover_address(digest, Bytes(high.begin(), high.end() - 1)),
+          "A.13 truncated signature refused");
+
+    json j;
+    j["doc"] = "White paper §14.4 and A.13. Keccak-256 uses the original Keccak padding (0x01), not "
+               "SHA3-256 (0x06). The relay rebuilds the digest from its own vault address, chain id and "
+               "payout address, recovers the secp256k1 signer (v in {27,28} or {0,1}; s must be <= n/2; "
+               "the recovered address must be non-zero) and requires it to equal the rental's payment key.";
+    j["inputs"] = {{"payment_private_key", priv_hex}, {"payment_key", address}, {"vault", vault},
+                   {"chain_id", chain_id}, {"payee", payee}, {"cumulative_micro", cumulative}};
+    j["inner_keccak256_hex"] = hex(inner);
+    j["eip191_digest_hex"] = hex(digest);
+    j["sig"] = sig_hex;
+    j["recovered_address"] = *signer;
+    j["notes"] = json::array({
+        "inner = keccak256(\"r2r-voucher-v1\" || vault[20] || uint256_be(chain_id) || payee[20] || uint256_be(cumulative))",
+        "digest = keccak256(\"\\x19Ethereum Signed Message:\\n32\" || inner)",
+        "sig = r[32] || s[32] || v[1] as 0x + 130 hex; the relay lowercases it before decoding",
+        "address = 0x + hex(keccak256(X[32] || Y[32])[12..32]) of the uncompressed public key"});
+    return j;
+}
+
 int main(int argc, char** argv) {
     const bool regen = argc > 1 && std::string_view(argv[1]) == "--regen";
     if (argc > 1 && !regen) {
@@ -1329,6 +1392,7 @@ int main(int argc, char** argv) {
     doc["onion"] = section_onion(f, onion_blob, onion2_blob);
     doc["addressing"] = section_addressing(f);
     doc["invite_codes_and_fingerprints"] = section_invites_and_fingerprints(f);
+    doc["storage_voucher"] = section_voucher();
 
     std::cout << doc.dump(2) << "\n";
     return 0;

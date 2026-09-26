@@ -108,6 +108,14 @@ network does. §19.1 of the white paper is the full list.
   `peers.json`, `advertise` in a hello, gossip entries, the client's
   `fingerprint@host:port` destinations, and hostnames after DNS resolution.
   Provide `--allow-private-peers` for test benches only.
+- **Pointers and presence are gated.** Accept a pointer only from a verified
+  relay session, and only when the address it names is a peer your relay has
+  verified with that node id and key. Answer `watch` only for sessions that
+  proved an identity.
+- **Vouchers are verified before storage is extended.** Rebuild the §14.4
+  digest (Keccak-256 with the original padding, EIP-191 prefix), recover the
+  secp256k1 signer (low-s only), and require it to equal the rental's payment
+  key. Refuse vouchers when no vault address is configured.
 - **Onion silence.** A relay that accepts a layer sends nothing back; only
   failures travel back. The layer tag covers the whole slot header.
 - **Gossip only on the first handshake of a connection**, so a repeated

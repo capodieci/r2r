@@ -275,6 +275,9 @@ int main(int argc, char** argv) {
 
         PeerRegistry peers;
         peers.configure(cfg.peers_file, cfg.max_peers, 3600, cfg.allow_private_peers);
+        if (cfg.market_enabled() && cfg.vault_address.empty())
+            log::warn("the storage market is on but --vault-address is not set: vouchers cannot be "
+                      "verified and will be refused until it is");
         if (cfg.allow_private_peers)
             log::warn("--allow-private-peers is on: peers on loopback and private ranges "
                       "will be accepted and dialled (test benches only)");

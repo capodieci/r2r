@@ -61,6 +61,7 @@ struct Options {
     std::string path = "/r2r";  // request path for the upgrade
     std::vector<std::string> hops;
     int timeout_s = 15;
+    bool anonymous = false;     // --anonymous: hello without proving an identity
 };
 
 // A client identity is an ed25519 key, and its fingerprint is a hash of the
@@ -472,7 +473,8 @@ bool say_hello(Client& c, const Options& opt, const Identity* id = nullptr) {
 // the relay a peer list. This is the shape of a peer-table poisoning attempt;
 // the relay must welcome the session (joining needs no permission) yet ignore
 // the list until it has dialled `advertise` and found this node there.
-int cmd_rogue(const Options& opt, const std::string& advertise, const std::string& list) {
+int cmd_rogue(const Options& opt, const std::string& advertise, const std::string& list,
+              const std::string& point_at = std::string{}) {
     auto key = crypto::NodeIdentity::generate();
     if (!key) {
         std::cerr << "could not generate a node key\n";
@@ -508,12 +510,69 @@ int cmd_rogue(const Options& opt, const std::string& advertise, const std::strin
         if (!util::trim(a).empty()) peers.push_back({{"address", util::trim(a)}, {"tls", false}});
     if (!c.send(json{{"t", proto::kPeers}, {"peers", peers}})) return 1;
     std::cout << "offered " << peers.size() << " peer address(es)\n";
+    if (!point_at.empty()) {
+        // A forged mail pointer: "fingerprint X has 7 payloads waiting at my
+        // address", signed with the throwaway key. Only a relay this node has
+        // verified may say that, so the relay must drop it.
+        const std::int64_t pts = util::now_unix();
+        json ptr{{"t", proto::kPointer}, {"fp", point_at},     {"address", advertise},
+                 {"count", 7},           {"ts", pts},          {"node_id", key->node_id()},
+                 {"ed25519", key->ed_pub_b64()}, {"hops", 2}};
+        if (auto psig = key->sign(proto::pointer_signing_string(point_at, advertise, pts)))
+            ptr["sig"] = util::b64_encode(*psig);
+        if (!c.send(ptr)) return 1;
+        std::cout << "pointer sent for " << point_at.substr(0, 12) << "… at " << advertise << "\n";
+    }
     // Give the relay a moment to react (an error frame would arrive here);
     // then hang up. What it did with the list shows in its log and status.
     c.set_deadline(2);
     if (auto err = c.await({proto::kError}, 32, true))
         std::cout << "relay answered: " << err->dump() << "\n";
     c.close();
+    return 0;
+}
+
+// Mints a storage voucher the way a wallet does (§14.4): prints the payment
+// key's address and the EIP-191 signature, for feeding to a `voucher` frame.
+int cmd_voucher_sign(const std::string& priv_hex, const std::string& vault, long chain_id,
+                     const std::string& payout, long cumulative) {
+    auto priv = util::hex_decode(priv_hex.rfind("0x", 0) == 0 ? priv_hex.substr(2) : priv_hex);
+    if (!priv || priv->size() != 32) {
+        std::cerr << "the payment key must be 32 bytes of hex\n";
+        return 2;
+    }
+    const crypto::Bytes digest = crypto::evm_voucher_digest(vault, chain_id, payout, cumulative);
+    auto address = crypto::evm_address_of(*priv);
+    if (digest.empty() || !address) {
+        std::cerr << "vault and payout must be 0x addresses, chain id and cumulative positive\n";
+        return 2;
+    }
+    auto sig = crypto::evm_sign(*priv, digest);
+    if (!sig) {
+        std::cerr << "signing failed\n";
+        return 1;
+    }
+    std::cout << "address " << *address << "\n"
+              << "digest 0x" << util::hex_encode(digest) << "\n"
+              << "sig 0x" << util::hex_encode(*sig) << "\n";
+    return 0;
+}
+
+// The relay-side check, standalone: which address signed this voucher?
+int cmd_voucher_check(const std::string& vault, long chain_id, const std::string& payout,
+                      long cumulative, const std::string& sig_hex) {
+    const crypto::Bytes digest = crypto::evm_voucher_digest(vault, chain_id, payout, cumulative);
+    auto sig = util::hex_decode(sig_hex.rfind("0x", 0) == 0 ? sig_hex.substr(2) : sig_hex);
+    if (digest.empty() || !sig) {
+        std::cerr << "bad inputs\n";
+        return 2;
+    }
+    auto who = crypto::evm_recover_address(digest, *sig);
+    if (!who) {
+        std::cout << "signature does not recover to any address\n";
+        return 1;
+    }
+    std::cout << "signer " << *who << "\n";
     return 0;
 }
 
@@ -572,7 +631,7 @@ int cmd_frame(const Options& opt, const std::string& raw, const std::string& rep
         return 1;
     }
     Client c(opt);
-    if (!c.connect() || !say_hello(c, opt, &*id)) return 1;
+    if (!c.connect() || !say_hello(c, opt, opt.anonymous ? nullptr : &*id)) return 1;
     if (!c.send(frame)) return 1;
     const std::string type = frame.value("t", std::string{});
     auto reply = c.await({reply_type.empty() ? type : reply_type, proto::kAdminOk});
@@ -1055,9 +1114,17 @@ void usage() {
         "  sig <fingerprint> <text>    send a call signalling frame to a connected peer\n"
         "  watch <fingerprint>         report whether that identity is online\n"
         "\n"
+        "Storage market (what the wallet signs):\n"
+        "  voucher-sign <priv> <vault> <chain> <payout> <cumulative>\n"
+        "                              mint a voucher signature with a secp256k1 key\n"
+        "  voucher-check <vault> <chain> <payout> <cumulative> <sig>\n"
+        "                              recover the signer, as the relay does\n"
+        "\n"
         "Peer-table hygiene:\n"
-        "  rogue <advertise> <addrs>   join as a self-signed relay and gossip <addrs>;\n"
-        "                              the relay must not act on them\n"
+        "  rogue <advertise> <addrs> [fp]\n"
+        "                              join as a self-signed relay, gossip <addrs> and,\n"
+        "                              with fp, plant a forged mail pointer; the relay\n"
+        "                              must act on none of it\n"
         "\n"
         "Relay owner (what the wallet's owner panel does):\n"
         "  accounts                    list identities, their usage and allowances\n"
@@ -1069,6 +1136,7 @@ void usage() {
         "  --key PATH    ed25519 identity key, created if absent\n"
         "                (default $HOME/.r2r-probe.key)\n"
         "  --path P      upgrade request path (default /r2r; use /ws behind nginx)\n"
+        "  --anonymous   with `frame`: hello without proving an identity\n"
         "  --hops LIST   comma-separated onion hops, in order\n"
         "  --timeout N   per-operation deadline in seconds (default 15)\n";
 }
@@ -1086,6 +1154,7 @@ int main(int argc, char** argv) {
         if (a == "--url") opt.url = next();
         else if (a == "--http") opt.http_url = next();
         else if (a == "--key") opt.key_path = next();
+        else if (a == "--anonymous") opt.anonymous = true;
         else if (a == "--path") opt.path = next();
         else if (a == "--timeout") opt.timeout_s = std::max(1, std::atoi(next().c_str()));
         else if (a == "--hops") {
@@ -1137,9 +1206,17 @@ int main(int argc, char** argv) {
     if (cmd == "status") return cmd_status(opt);
     if (cmd == "peers") return cmd_peers(opt);
     if (cmd == "ping") return cmd_ping(opt);
+    if (cmd == "voucher-sign") {
+        if (args.size() < 6) { std::cerr << "voucher-sign needs <privkey-hex> <vault> <chain-id> <payout> <cumulative>\n"; return 2; }
+        return cmd_voucher_sign(args[1], args[2], std::atol(args[3].c_str()), args[4], std::atol(args[5].c_str()));
+    }
+    if (cmd == "voucher-check") {
+        if (args.size() < 6) { std::cerr << "voucher-check needs <vault> <chain-id> <payout> <cumulative> <sig>\n"; return 2; }
+        return cmd_voucher_check(args[1], std::atol(args[2].c_str()), args[3], std::atol(args[4].c_str()), args[5]);
+    }
     if (cmd == "rogue") {
-        if (args.size() < 3) { std::cerr << "rogue needs <advertise> <addr[,addr...]>\n"; return 2; }
-        return cmd_rogue(opt, args[1], args[2]);
+        if (args.size() < 3) { std::cerr << "rogue needs <advertise> <addr[,addr...]> [fingerprint]\n"; return 2; }
+        return cmd_rogue(opt, args[1], args[2], args.size() > 3 ? args[3] : std::string{});
     }
     if (cmd == "claim") {
         if (args.size() < 2) { std::cerr << "claim needs an invite code\n"; return 2; }
