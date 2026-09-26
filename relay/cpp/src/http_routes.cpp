@@ -22,6 +22,19 @@ using nlohmann::json;
 namespace r2r {
 namespace {
 
+// A Host header value that is safe to echo: it must parse as an address
+// (letters, digits, dots, dashes, underscores, one optional port, or a
+// bracketed IPv6 literal). Everything else becomes empty, which the doorway
+// treats as "use the advertise host". No HTML metacharacter survives this.
+std::string safe_host(std::string raw) {
+    raw = r2r::util::trim(raw);
+    if (raw.empty() || raw.size() > 253 + 6) return {};
+    auto a = r2r::util::parse_address(raw, 1);
+    if (!a) return {};
+    return r2r::util::to_lower(raw);
+}
+
+
 using Response = http::response<http::string_body>;
 using Request = http::request<http::string_body>;
 
@@ -478,7 +491,10 @@ http::response<http::string_body> handle_http_request(const Request& req, Server
     // The doorway site takes over "/" and its page routes when a bundle is
     // loaded; every JSON endpoint below keeps its route either way.
     if (ctx.doorway && ctx.doorway->loaded()) {
-        const std::string host(req[http::field::host]);
+        // The Host header is attacker-influenced behind a careless proxy or
+        // cache. Only a plain hostname[:port] (or [v6]:port) is ever used;
+        // anything else falls back to the advertise host inside the doorway.
+        const std::string host = safe_host(std::string(req[http::field::host]));
         std::string lang = ctx.doorway->pick_language(
             std::string(req[http::field::cookie]),
             std::string(req[http::field::accept_language]));

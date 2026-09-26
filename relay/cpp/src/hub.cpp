@@ -367,6 +367,15 @@ Hub::ClientProof Hub::verify_client_proof(const json& j) const {
         p.error = proto::kErrNotAuthorised;
         return p;
     }
+    // A proof is spent the moment it verifies. The seen cache outlives the
+    // ±600 s clock window, so a captured proof cannot be presented a second
+    // time, on the socket or in an X-R2R-Auth header. Wallets sign a fresh
+    // nonce per use, so nothing legitimate is refused.
+    if (!seen_.insert("c:" + id + "|" + nonce)) {
+        log::debug("proof for ", log::short_id(id), " presented twice; the replay is refused");
+        p.error = proto::kErrNotAuthorised;
+        return p;
+    }
     p.ok = true;
     p.fingerprint = id;
     p.pubkey_b64 = pub_b64;
@@ -857,6 +866,15 @@ void Hub::handle_collect(const SessionPtr& s, const json& j) {
     }
     if (!is_relay) {
         send_error(s->conn, proto::kErrNotAuthorised, "collection is presented by relays");
+        return;
+    }
+    // Only a relay this node has dialled and verified may present a
+    // collection: the authorisation is the identity's, single-use and bound
+    // to this holder, but the link it arrives on must be a real relay's, not
+    // a session anyone could open with a key. The wallet re-deposits after
+    // every connect and mail_at, so a collect dropped here is retried.
+    if (!session_is_verified_relay(s)) {
+        log::debug("collect from an unverified relay session (", s->peer_address, ") dropped");
         return;
     }
     const std::string fp = util::to_lower(j.value("fp", std::string{}));

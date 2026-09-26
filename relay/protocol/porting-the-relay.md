@@ -81,6 +81,12 @@ when they are wrong — only the network does.
   require it to be the rental's payment key before extending `paid_until`.
   `protocol-vectors.json` has a known-answer voucher; the reference probe's
   `voucher-sign` and `voucher-check` commands produce and check them.
+- **Proofs are single-use.** Remember every accepted client proof's
+  `(id, nonce)` for longer than the ±600 s window and refuse a repeat, on the
+  socket and in `X-R2R-Auth`. `collect` is accepted from verified relay
+  sessions only. (§4.4, §9.6.)
+- **Never echo `Host` raw.** Validate it as an address, escape it in HTML, and
+  escape JSON for script context. (§16.)
 - **Onion silence.** A relay that accepts a layer sends nothing back. Only
   failures travel back. The layer's tag covers the whole slot header, so
   slots cannot be reordered or dropped.

@@ -1,5 +1,5 @@
 {
-  "built_at": "2026-09-26T12:03:20Z",
+  "built_at": "2026-09-26T13:39:51Z",
   "files": {
     "HANDOFF.md": {
       "sha256": "4c68000572b8e567568a8eef00b532da0f917b8cf0012ae088dafbafff9439bd",
@@ -242,8 +242,8 @@
       "size": 31732
     },
     "templates/en/paper.html": {
-      "sha256": "37a64a325c8cc5cf091a27b680767a5953114a062fbd3aef7fa782a92d3c338d",
-      "size": 274084
+      "sha256": "a0962083dae2bb93c61d4a96e2799a6362623a259c163e71c0935c3982483a58",
+      "size": 277036
     },
     "templates/en/privacy.html": {
       "sha256": "94e808ee393c6025dee6d3d64306efd04bdbdcb8f20fd684f03804c55fd6ffe2",

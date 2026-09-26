@@ -21,6 +21,7 @@
 set -uo pipefail
 
 BUILD="${1:-build}"
+SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RELAY="$BUILD/r2r-relay"
 PROBE="$BUILD/r2r-probe"
 RELAY_A="${RELAY_A:-$RELAY}"
@@ -79,7 +80,7 @@ start_relay() { # start_relay <binary> <dir> <ws> <wss> <dial-target>
     "$bin" --data-dir "$1" --ws-port "$2" --wss-port "$3" \
         --cert "$1/tls/cert.pem" --key "$1/tls/key.pem" \
         --advertise "127.0.0.1:$2" --peer-dial-target "$4" \
-        --allow-private-peers --assets "$1/assets" \
+        --allow-private-peers --assets "$1/assets" --doorway "$SRC/web/doorway" \
         --log-level debug > "$1/relay.log" 2>&1 &
     echo $!
 }
@@ -102,7 +103,16 @@ wait_for_health "$B_WS" || { echo "relay B never became healthy"; exit 1; }
 
 echo
 echo "HTTP surface"
-check "landing page renders"        "R2R relay"       "$(curl -s http://127.0.0.1:$A_WS/)"
+check "landing page renders"        "R2R"             "$(curl -s http://127.0.0.1:$A_WS/ | head -c 4000)"
+# The Host header is rendered into the doorway pages. A hostile value must
+# neither appear as markup nor survive at all: only hostname[:port] is used.
+EVIL='x<b>evil</b>y'
+check "hostile Host is not reflected" "none" \
+    "$(curl -s -H "Host: $EVIL" http://127.0.0.1:$A_WS/ | grep -q '<b>evil</b>' && echo reflected || echo none)"
+check "hostile Host is dropped"       "none" \
+    "$(curl -s -H "Host: $EVIL" http://127.0.0.1:$A_WS/ | grep -q 'evil' && echo present || echo none)"
+check "honest Host is used"           "relay.example.test:18787" \
+    "$(curl -s -H "Host: relay.example.test:18787" http://127.0.0.1:$A_WS/run-a-relay | grep -o 'relay.example.test:18787' | head -1)"
 check "peers.json seeded"           "92.113.147.233"  "$(curl -s http://127.0.0.1:$A_WS/peers.json)"
 check "node.json exposes x25519"    "x25519"          "$(curl -s http://127.0.0.1:$A_WS/node.json)"
 check "status.json over TLS"        "node_id"         "$(curl -sk https://127.0.0.1:$A_WSS/status.json)"
@@ -244,6 +254,12 @@ check "identical content stored once"       "already stored"        \
     "$($PROBE --url ws://127.0.0.1:$A_WS --key "$WORK/alice.key" blob "$WORK/voice.opus" 2>&1)"
 check "unauthenticated fetch refused"       "401"                   \
     "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:$A_WS/blob/$(printf 'a%.0s' $(seq 1 64)))"
+# A signed proof is single-use: the same header a second time is a replay.
+AUTH=$($PROBE --key "$WORK/alice.key" authheader 2>/dev/null)
+FIRST=$(curl -s -o /dev/null -w '%{http_code}' -H "X-R2R-Auth: $AUTH" http://127.0.0.1:$A_WS/blob/$(printf 'a%.0s' $(seq 1 64)))
+SECOND=$(curl -s -o /dev/null -w '%{http_code}' -H "X-R2R-Auth: $AUTH" http://127.0.0.1:$A_WS/blob/$(printf 'a%.0s' $(seq 1 64)))
+check "fresh proof is accepted"             "404"                   "$FIRST"
+check "replayed proof is refused"           "401"                   "$SECOND"
 # A blob big enough to blow the per-user allowance must be refused, not stored.
 head -c 900000 /dev/urandom > "$WORK/big.opus"
 "$RELAY_A" --data-dir "$WORK/a" --set-quota "$ALICE" 1 >/dev/null 2>&1
@@ -385,6 +401,8 @@ check "rogue pointer is offered"       "pointer sent"   "$ROGUE2"
 check "forged pointer is dropped"      "dropped"        \
     "$(grep -h "pointer .*$ROGUE_ADV\|pointer from an unverified relay" "$WORK/a/relay.log" 2>/dev/null | tail -1)"
 wait "$LISTEN2_PID" 2>/dev/null
+check "forged collect is dropped"      "unverified relay session" \
+    "$(grep -h "collect from an unverified relay session" "$WORK/a/relay.log" 2>/dev/null | tail -1)"
 check "victim hears no mail_at"        "none"           \
     "$(grep -q "MAIL_AT\|mail_at" "$WORK/listen2.out" 2>/dev/null && echo pushed || echo none)"
 # Without --allow-private-peers, loopback and private ranges are refused

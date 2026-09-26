@@ -2,7 +2,7 @@
 
 ## White paper and complete protocol specification
 
-**Protocol:** R2R v2 (wire `proto` field: `1`) · **Reference relay:** `r2r-relay` 1.0.2 (C++20) · **Reference client:** the R-2-Я wallet (single-file HTML/JS) · **Document date:** 26 September 2026 (this revision: voucher signature verification in §14.4, pointer and presence rules in §9.5 and §7.11, relay 1.0.2; earlier the same day: peer-table verification rules in §11, relay 1.0.1; 23 September: wallet onion routing, relay input hardening, invite activation, new seed network, onion v2 with standby relays, scrypt key derivation)
+**Protocol:** R2R v2 (wire `proto` field: `1`) · **Reference relay:** `r2r-relay` 1.0.3 (C++20) · **Reference client:** the R-2-Я wallet (single-file HTML/JS) · **Document date:** 26 September 2026 (this revision: single-use client proofs in §4.4, collect from verified relays in §9.6, relay 1.0.3; voucher signature verification in §14.4, pointer and presence rules in §9.5 and §7.11, relay 1.0.2; earlier the same day: peer-table verification rules in §11, relay 1.0.1; 23 September: wallet onion routing, relay input hardening, invite activation, new seed network, onion v2 with standby relays, scrypt key derivation)
 
 ---
 
@@ -251,7 +251,9 @@ A relay MUST check all of the following, in any order, and treat any failure as 
 5. `fingerprint(pubkey) == id`. This check is essential: without it, any key's valid signature would bind any mailbox.
 6. `Ed25519_Verify(pubkey, signing_string, sig)`.
 
-The reference wallet uses a 12-byte random nonce (24 hex characters). The relay does not remember nonces for `hello`, so a captured proof can be replayed within the ±10-minute window. That is acceptable because a proof only opens a session for the same key holder; it cannot be used to impersonate anyone else.
+7. The pair `(id, nonce)` has not been presented before. A relay remembers every accepted proof for at least the clock window (the reference keeps them for 900 s), so a captured proof is worthless a second time, whether on a socket or in an `X-R2R-Auth` header. Wallets sign a fresh nonce for every use.
+
+The reference wallet uses a 12-byte random nonce (24 hex characters). Before 1.0.3 the relay did not remember nonces, so a captured proof could be replayed within the ±10-minute window. That is acceptable because a proof only opens a session for the same key holder; it cannot be used to impersonate anyone else.
 
 The same object carries the proof in three places:
 
@@ -942,6 +944,7 @@ It records a guard `collecting[fp|holder] = now + 600 s`.
 
 **Holder side** (relay sessions only; any failure means a silent drop):
 
+0. The sending session is a **verified** relay (§11.2). The authorisation is the identity's own and bound to this holder, but the link presenting it must belong to a relay this node has dialled and found, not to a session anyone could open with a key. A collect dropped here is retried: the wallet deposits again after every connect and every `mail_at` (§15).
 1. `fp` is valid, `scope` is `collect` or `collect-delete`, and `nonce` is 16–64 characters.
 2. `holder` **equals this relay's advertise address exactly**. An authorisation signed for another holder is worthless here.
 3. `ts ≤ now + 600` and `ts ≥ now − 7 days`.
@@ -1604,6 +1607,9 @@ After every connect, and 1.5 s after a `mail_at` (debounced), the wallet sends `
 
 ## 16. HTTP API reference
 
+
+**Request `Host` header.** Doorway pages and the redeem flow print the host the visitor used. A relay MUST use that value only when it parses as `hostname[:port]` or `[v6]:port` (§3.4 character rules), MUST fall back to its advertise host otherwise, MUST HTML-escape it wherever it is rendered, and MUST escape `<`, `>`, `&` and U+2028/U+2029 in any JSON it embeds inside a `<script>` element.
+
 The same routes are served on both ports. With `--base-path /P`, routes are also reachable under `/P/…`: the prefix is stripped before routing. `/R2R-…` invite URLs never collide with a base path, because a dash follows `R2R` where a mount point would have a slash.
 
 **Headers on every response:** `Server: r2r-relay/<ver>`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY`, `Cache-Control: no-store` (unless a route overrides it). JSON routes add CORS headers (`Access-Control-Allow-Origin: *`, methods `GET, POST, OPTIONS`, header `Content-Type`, max-age 600). `OPTIONS` requests get `204`.
@@ -1732,6 +1738,9 @@ v1 compatibility variables that are still honoured: `PORT`, `DATA_DIR`, `QUEUE_T
 | Peer table | Anyone may open a relay session, but only addresses this relay has dialled and found are verified, published, gossiped or used for rendezvous; peer lists are accepted from verified relays only, capped per session; unverified claims get at most 2 verification dials per 15 s; non-public addresses are refused everywhere | A node that really runs a reachable relay is verified like any other and may then gossip; its entries are still dialled at the bounded rate, to public addresses only, and it learns nothing from the outcome |
 | Pointers | Signed by the holder; accepted only from a verified relay session and only about a holder this relay has itself verified at that address | Any genuinely reachable relay may still claim to hold mail for any fingerprint, since any relay may legitimately receive a `send` for anyone. A wallet that gathers from a pointer reveals its fingerprint and source address to that relay; gathering through an onion route or a proxy is the wallet's mitigation. Holder addresses are cleartext. |
 | Presence | `watch` answers only a session that proved an identity | A proved identity can still ask whether any fingerprint is online here; the answer covers this relay only |
+| Proof replay | Every accepted client proof's nonce is remembered for longer than the clock window; a second presentation is refused | A proof captured on a plaintext `ws://` link and presented *before* the wallet's own use would still win the race; `wss://` is the answer to capture |
+| Web pages | The `Host` header is used only when it parses as a hostname[:port], is HTML-escaped where rendered, and JSON embedded in a script is escaped for that context | Behind a proxy or cache that ignores `Host`, the pages still reflect whatever hostname the proxy forwards |
+| Mailbox filling | Per-recipient allowance and drop count; the owner can raise the allowance; junk is cleared by fetching and acknowledging | Anyone may leave payloads for any fingerprint, including through onion routes, so a targeted mailbox can be filled to its allowance by an anonymous sender. This is a consequence of unsolicited dead drops and of never recording sender addresses; it is bounded and reversible, and a capability-gated store would be a protocol change |
 | Collection | Holder-bound, single-use nonce, 7-day window, collector not named | A holder learns that *someone* collected for a fingerprint |
 | Money | No chain keys on relays; vouchers bound to vault, chain and payee and verified by the relay before any storage is extended; wallet pins the vault address | The relay cannot see deposits, so a validly signed voucher from an unfunded key still buys up to 3 epochs of storage until settlement fails; bound by `--pool-market-mb` and by settling often. The wallet is the auditor. Audits sample 3 entries, which is probabilistic |
 | Metadata at rest | No IPs, last-seen rounded to the hour, `secure_delete`, a privacy contract on logging | Relays see recipient fingerprints, sizes, timing and journal activity |
@@ -1784,6 +1793,8 @@ Traffic analysis by a global passive adversary; a malicious recipient (who can a
 - [ ] Match the §17 limits and timers, publish `/node.json`, `/peers.json` and `/status.json`, support `push`, pointers and deposit, and park undeliverable `send`s locally.
 - [ ] Accept pointers only from verified relay sessions and only about verified holders (§9.5 rules 0 and 2); answer `watch` only for sessions that proved an identity (§7.11).
 - [ ] Verify every voucher's secp256k1 signature against the rental's payment key over the §14.4 digest before extending `paid_until`; refuse vouchers without a configured vault address.
+- [ ] Remember accepted proof nonces for at least the clock window and refuse a second presentation (§4.4 rule 7); accept `collect` only from verified relay sessions (§9.6 rule 0).
+- [ ] Never render the request `Host` header, or any other request value, into HTML or an inline script without validating and escaping it for that context (§16).
 
 ### 19.3 A wallet MUST
 

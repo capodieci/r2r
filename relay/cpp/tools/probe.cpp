@@ -522,6 +522,15 @@ int cmd_rogue(const Options& opt, const std::string& advertise, const std::strin
             ptr["sig"] = util::b64_encode(*psig);
         if (!c.send(ptr)) return 1;
         std::cout << "pointer sent for " << point_at.substr(0, 12) << "… at " << advertise << "\n";
+        // And a collection request. The authorisation inside cannot be forged
+        // (it is the identity's own signature), so this one carries junk; the
+        // relay must refuse the link before it even looks at the signature.
+        json col{{"t", proto::kCollect},   {"fp", point_at},        {"pubkey", key->ed_pub_b64()},
+                 {"scope", "collect"},     {"holder", "0.0.0.0:1"},  {"ts", pts},
+                 {"nonce", util::hex_encode(crypto::random_bytes(12))}, {"sig", "AA=="},
+                 {"want_max", 200}};
+        if (!c.send(col)) return 1;
+        std::cout << "collect sent for " << point_at.substr(0, 12) << "…\n";
     }
     // Give the relay a moment to react (an error frame would arrive here);
     // then hang up. What it did with the list shows in its log and status.
@@ -573,6 +582,18 @@ int cmd_voucher_check(const std::string& vault, long chain_id, const std::string
         return 1;
     }
     std::cout << "signer " << *who << "\n";
+    return 0;
+}
+
+// Prints the X-R2R-Auth header value for this identity: one fresh, signed
+// proof. Presenting it twice must fail the second time.
+int cmd_authheader(const Options& opt) {
+    auto id = load_identity(opt.key_path);
+    if (!id) {
+        std::cerr << "could not load or create the identity key at " << opt.key_path << "\n";
+        return 1;
+    }
+    std::cout << auth_header(*id) << "\n";
     return 0;
 }
 
@@ -1137,6 +1158,7 @@ void usage() {
         "                (default $HOME/.r2r-probe.key)\n"
         "  --path P      upgrade request path (default /r2r; use /ws behind nginx)\n"
         "  --anonymous   with `frame`: hello without proving an identity\n"
+        "  authheader    (command) print one X-R2R-Auth header value for --key\n"
         "  --hops LIST   comma-separated onion hops, in order\n"
         "  --timeout N   per-operation deadline in seconds (default 15)\n";
 }
@@ -1204,6 +1226,7 @@ int main(int argc, char** argv) {
     }
     if (cmd == "mkinvites") return cmd_mkinvites(opt, args.size() > 1 ? std::atoi(args[1].c_str()) : 3);
     if (cmd == "status") return cmd_status(opt);
+    if (cmd == "authheader") return cmd_authheader(opt);
     if (cmd == "peers") return cmd_peers(opt);
     if (cmd == "ping") return cmd_ping(opt);
     if (cmd == "voucher-sign") {

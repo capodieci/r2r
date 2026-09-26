@@ -296,7 +296,7 @@ private:
     std::unordered_map<std::string, std::int64_t> last_seen_;              // identity -> unix time
     std::unordered_map<std::string, std::int64_t> collecting_;  // "fp|holder" -> expires
 
-    SeenCache seen_;
+    mutable SeenCache seen_;  // message ids, pointer keys and spent proof nonces
 
     std::atomic<std::int64_t> frames_in_{0};
     std::atomic<std::int64_t> frames_out_{0};

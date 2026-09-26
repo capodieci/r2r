@@ -12,6 +12,31 @@ using nlohmann::json;
 namespace r2r {
 namespace {
 
+// JSON for an inline <script>: JSON's own escaping leaves "<", ">" and "&"
+// alone, so a value containing "</script>" would end the element. These are
+// escaped as \uXXXX, which is still valid JSON and valid JavaScript, along
+// with the two Unicode line separators that are legal in JSON strings and
+// illegal in older JS string literals.
+std::string script_json(const nlohmann::json& j) {
+    const std::string raw = j.dump();
+    std::string out;
+    out.reserve(raw.size() + 16);
+    for (std::size_t i = 0; i < raw.size(); ++i) {
+        const unsigned char c = static_cast<unsigned char>(raw[i]);
+        if (c == '<') out += "\\u003c";
+        else if (c == '>') out += "\\u003e";
+        else if (c == '&') out += "\\u0026";
+        else if (c == 0xe2 && i + 2 < raw.size() && static_cast<unsigned char>(raw[i + 1]) == 0x80 &&
+                 (static_cast<unsigned char>(raw[i + 2]) == 0xa8 ||
+                  static_cast<unsigned char>(raw[i + 2]) == 0xa9)) {
+            out += static_cast<unsigned char>(raw[i + 2]) == 0xa8 ? "\\u2028" : "\\u2029";
+            i += 2;
+        } else out += static_cast<char>(c);
+    }
+    return out;
+}
+
+
 // The seven static pages of the doorway and where they live in the bundle.
 const char* const kPageNames[] = {"index",      "privacy", "faq",      "network",
                                   "run-a-relay", "homes",   "downloads"};
@@ -396,7 +421,7 @@ std::string Doorway::substitute(const std::string& body, const std::string& lang
             break;
         }
         const std::string token = body.substr(open + 2, close - open - 2);
-        if (token == "HOST") out += use_host;
+        if (token == "HOST") out += util::html_escape(use_host);  // never raw, whatever the caller passed
         else if (token == "SCHEME") out += https ? "https" : "http";
         else if (token == "BASE") out += base_path_;
         else if (token == "LANG") out += lang;
@@ -623,7 +648,7 @@ std::string Doorway::render_redeem(const RedeemView& v, const std::string& lang,
                 "<script src=\"" + b + "/js/qrcode.min.js\"></script>\n"
                 "<script src=\"" + b + "/js/card.js\"></script>\n"
                 "<script>R2R.renderCard(document.getElementById('card-canvas'), " +
-                opts.dump() + ");</script>\n";
+                script_json(opts) + ");</script>\n";
     } else if (v.view == "confirm") {
         body += "<h1>" + h(t("redeem.confirm.h1")) + "</h1>\n<p class=\"tagline\">" +
                 text(lang, "redeem.confirm.tagline_html") + "</p>\n"

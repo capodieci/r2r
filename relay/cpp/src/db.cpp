@@ -11,6 +11,10 @@
 namespace r2r {
 namespace {
 
+// No single store is ever larger than this; anything claiming to be is a bug
+// or an attack, and is refused before it can reach any arithmetic.
+constexpr std::int64_t kMaxAddBytes = std::int64_t{1} << 40;
+
 std::once_flag g_sqlite_init;
 
 void ensure_sqlite_initialised() {
@@ -200,7 +204,11 @@ bool Db::common_pool_exceeded(const std::string& fingerprint, std::int64_t add_b
         if (exempt) return false;
     }
 
-    if (free_tier_bytes_locked() + add_bytes > common_pool_bytes_) return true;
+    // Checked: the pool and the usage are both bounded by disk, but the sum
+    // is not, and a signed overflow here is undefined behaviour.
+    if (add_bytes <= 0) return false;
+    if (add_bytes > kMaxAddBytes) return true;
+    if (add_bytes > common_pool_bytes_ - free_tier_bytes_locked()) return true;
     // Bump the running estimate so back-to-back stores between refreshes
     // cannot slide past the cap.
     free_tier_memo_ += add_bytes;
@@ -471,7 +479,7 @@ Db::StoreResult Db::store_drop(const std::string& id, const std::string& recipie
             const std::int64_t bytes = q->col_i64(1);
             q->reset();
             if (count >= max_drops_per_recipient_ ||
-                bytes + static_cast<std::int64_t>(len) > allowance)
+                static_cast<std::int64_t>(len) > allowance - bytes)  // overflow-free form
                 return StoreResult::quota_exceeded;
         } else {
             q->reset();
@@ -591,7 +599,7 @@ Db::AppendResult Db::journal_append(const std::string& fingerprint, const void* 
         if (q->step() == SQLITE_ROW) used = q->col_i64(0);
         q->reset();
     }
-    if (used + static_cast<std::int64_t>(len) > allowance) {
+    if (static_cast<std::int64_t>(len) > allowance - used) {
         exec("ROLLBACK");
         return AppendResult::quota_exceeded;
     }
@@ -680,7 +688,7 @@ Db::BlobResult Db::blob_record(const std::string& id, const std::string& owner, 
         if (q->step() == SQLITE_ROW) used = q->col_i64(0);
         q->reset();
     }
-    if (used + size > allowance) return BlobResult::quota_exceeded;
+    if (size > allowance - used) return BlobResult::quota_exceeded;
     if (common_pool_exceeded(owner, size)) return BlobResult::quota_exceeded;
 
     auto* st = cached("INSERT INTO blobs(id, owner, size, created_at, expires_at)"

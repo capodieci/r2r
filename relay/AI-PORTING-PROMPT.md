@@ -116,6 +116,12 @@ network does. §19.1 of the white paper is the full list.
   digest (Keccak-256 with the original padding, EIP-191 prefix), recover the
   secp256k1 signer (low-s only), and require it to equal the rental's payment
   key. Refuse vouchers when no vault address is configured.
+- **Proofs are single-use.** Keep every accepted `(id, nonce)` for at least
+  the clock window and refuse a second presentation, on the socket and in the
+  `X-R2R-Auth` header. Accept `collect` only from verified relay sessions.
+- **Never render the `Host` header raw.** Use it only when it parses as
+  `hostname[:port]`, HTML-escape it, and escape `<`, `>`, `&`, U+2028 and
+  U+2029 in JSON placed inside a `<script>` element.
 - **Onion silence.** A relay that accepts a layer sends nothing back; only
   failures travel back. The layer tag covers the whole slot header.
 - **Gossip only on the first handshake of a connection**, so a repeated
