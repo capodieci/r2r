@@ -2,7 +2,7 @@
 
 ## White paper and complete protocol specification
 
-**Protocol:** R2R v2 (wire `proto` field: `1`) · **Reference relay:** `r2r-relay` 1.0.0 (C++20) · **Reference client:** the R-2-Я wallet (single-file HTML/JS) · **Document date:** 23 September 2026 (revised the same day: wallet onion routing, relay input hardening, invite activation, new seed network, onion v2 with standby relays, scrypt key derivation)
+**Protocol:** R2R v2 (wire `proto` field: `1`) · **Reference relay:** `r2r-relay` 1.0.1 (C++20) · **Reference client:** the R-2-Я wallet (single-file HTML/JS) · **Document date:** 26 September 2026 (this revision: peer-table verification rules in §11, relay 1.0.1; 23 September: wallet onion routing, relay input hardening, invite activation, new seed network, onion v2 with standby relays, scrypt key derivation)
 
 ---
 
